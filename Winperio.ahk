@@ -69,22 +69,22 @@ class Window {
 	}
 }
 class Guid {
-	CharList := ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
-	Small {
-		get {
-			guid := ""
-			Loop, 8
-			{
-				Random, var, 1, 16
-				guid := guid . this.CharList[var]
-			}
-			return guid
+	static CharList := ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
+	Small() {
+		g := ""
+		Loop, 8
+		{
+			Random, var, 1, 16
+			g .= Guid.CharList[var]
 		}
+		return g
 	}
 }
 { ; housekeeping
 	#SingleInstance, Force
 	#Persistent
+	#Include lib\class_log.ahk
+	#Include lib\class_utils.ahk
 	SetTitleMatchMode, 2
 	fileVersion = 3.0.8
 	cPath := A_AppData "\Winperio"
@@ -134,42 +134,18 @@ class Guid {
 { ; main gui
 	defaultWidth := 1000
 	Gui, _Main_:Default
-	Gui, +MinSize +Resize ; +ToolWindow +Resize
-	#Include lib\class_log.ahk
-	#Include lib\class_utils.ahk
+	Gui, +Resize ; +ToolWindow +Resize
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
 	Gui, Add, Text, Section w940, Winperio
 	Gui, Font, s9, Segoe UI
-	Gui, Add, Button, w50 ym gShowAddNew, Add
+	Gui, Add, Button, w50 ym gShowAddNew vbtnAddNew, Add
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Identify By|Title|Class|Process|X|Y|W|H
+	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " currentActiveProfile
 	Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
 	Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
-	Gui, Add, Text, ys vlblCurrentProfile w775 right, % "Current Profile: " currentActiveProfile
-	;~ Gui, Add, Groupbox, xm w500 r10 vgrpBx2, Window Information
-	;~ Gui, Add, Radio, Section xp+15 yp+25 vRadMoveID, Window:
-	;~ Gui, Add, Radio, yp+30, Class:
-	;~ Gui, Add, Radio, yp+30, Process:
-	;~ Gui, Add, Text, yp+28 vlblXCoord, X:
-	;~ Gui, Add, Text, vlblYCoord, Y:
-	;~ Gui, Add, Text, vlblWCoord, W:
-	;~ Gui, Add, Text, vlblHCoord, H:
-	;~ Gui, Add, Edit, ys w395 vdispWin
-	;~ Gui, Add, Edit, wp vdispClass
-	;~ Gui, Add, Edit, wp vdispProc
-	;~ Gui, Add, Edit, Section w200 vdispXEdit gWinXCoordChanged
-	;~ Gui, Add, UpDown, vdispX gWinXCoordChanged 0x80 Range-2147483648-2147483647
-	;~ Gui, Add, Edit, wp vdispYEdit gWinYCoordChanged
-	;~ Gui, Add, UpDown, vdispY gWinYCoordChanged 0x80 Range-2147483648-2147483647
-	;~ Gui, Add, Edit, wp vdispWEdit gWinWCoordChanged 
-	;~ Gui, Add, UpDown, vdispW gWinWCoordChanged 0x80 Range-2147483648-2147483647
-	;~ Gui, Add, Edit, wp vdispHEdit gWinHCoordChanged
-	;~ Gui, Add, UpDown, vdispH gWinHCoordChanged 0x80 Range-2147483648-2147483647
-	;~ Gui, Add, Button, ys w184 h52 gSelect vbtnSelectWin, Select a Window
-	;~ Gui, Add, Button, xp yp wp hp gCancelSelect vbtnCancelSelect hidden, Cancel
-	;~ Gui, Add, Button, wp hp Disabled gSaveCoords vbtnSaveCoords, Save Coordinates
 }
 
 { ; add/edit gui
@@ -187,13 +163,13 @@ class Guid {
 	Gui, Add, Radio, Section vEditRadMoveID, Window:
 	Gui, Add, Radio, yp+35, Class:
 	Gui, Add, Radio, yp+35, Process:
-	Gui, Add, Radio, yp+35 disabled, Custom:
+	Gui, Add, Radio, yp+35 Disabled, Custom:
 	Gui, Add, Edit, ys w300 vEditdispWin
 	Gui, Add, Edit, wp vEditdispClass
 	Gui, Add, Edit, wp vEditdispProc
-	Gui, Add, Edit, wp vEditdispCustom disabled
+	Gui, Add, Edit, wp vEditdispCustom Disabled
 	
-	Gui, Add, Edit, xm w200 vtxtCurrentSeqId
+	Gui, Add, Edit, xm w200 vtxtCurrentSeqId Hidden
 	
 	Gui, Add, Text, Section xm w70, X:
 	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
@@ -214,7 +190,7 @@ class Guid {
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
-	Gui, Add, DDL, ys w250 Sort gCoordClone vDDLClone
+	Gui, Add, DDL, ys w250 Sort gCoordClone vddlCloneCoordinates
 }
 
 { ; menus
@@ -257,7 +233,6 @@ class Guid {
 
 ;~ if (trayTipCount < 3)
 Gui, Show, AutoSize Center, Winperio
-
 SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
 gosub, DataFetch
@@ -414,6 +389,7 @@ SelectedItem:
 	GuiControl, Enable, btnRemove
 	GuiControl, Enable, btnEdit
 	selectedRow := A_EventInfo
+	LV_ModifyCol(1, "Left")
 	return
 }
 
@@ -441,7 +417,8 @@ Remove:
 ShowAddNew:
 {
 	Gui, _Edit_:Default
-	ClearGui2("")
+	newId := Guid.Small()
+	resetEditGui(newId)
 	GuiControl,, EditTitleLabel, Add
 	Gui, Show, AutoSize Center, Winperio
 	selectMode := 1
@@ -455,7 +432,7 @@ Edit:
 	LV_GetText(EditSelectedEntry, selectedRow, 1)
 	w := WinArray[EditSelectedEntry]
 	Gui, _Edit_:Default
-	ClearGui2(w.SequenceID)
+	resetEditGui(w.SequenceID)
 	GuiControl,, EditTitleLabel, Edit
 	GuiControl,, EditDispWin, % w.Title
 	GuiControl,, EditDispClass, % w.Class
@@ -520,7 +497,7 @@ EditCancel:
 	Gui, _Edit_:Hide
 	selectMode := 0
 	;~ SetTimer, WatchWinEdit, Off
-	ClearGui2("")
+	resetEditGui("")
 	SetTimer, GetActiveWin, On
 	return
 }
@@ -595,12 +572,13 @@ CoordClone:
 {
 	Gui, _Edit_:Default
 	Gui, Submit, NoHide
-	cloneItem := findEntryByTitle(DDLClone)
-	if (entry == 0) {
-		m("ERROR: Entry not found in global array.")
+	cloneItem := findItemByTitle(ddlCloneCoordinates)
+	if (cloneItem == 0) {
+		m("ERROR: Item not found in global array.")
 		ExitApp
 	}
 	currentItem := WinArray[txtCurrentSeqId]
+	m(cloneItem.SequenceId "`n" txtCurrentSeqId)
 	MsgBox, 4132, Winperio, % "Are you sure you want apply the new coordinates?`n`nx: " cloneItem.XCoord "`ny: " cloneItem.YCoord "`nw: " cloneItem.Width "`nh: " cloneItem.Height
 	IfMsgBox, Yes
 	{
@@ -1007,15 +985,11 @@ _Main_GuiSize:
 	Gui, _Main_:Default
 	Gui, +LastFound
 	autoxywh("grpBx1","wh")
+	autoxywh("btnAddNew", "x")
 	autoxywh("ListSelection","wh")
 	autoxywh("btnRemove","y")
 	autoxywh("btnEdit","y")
 	autoxywh("btnSetWindows", "y")
-	autoxywh("grpBx2","wy")
-	autoxywh("dispWin","yw")
-	autoxywh("dispClass","yw")
-	autoxywh("dispProc","yw")
-	autoxywh("dispX","y")
 	autoxywh("dispXEdit","y")
 	autoxywh("dispY","y")
 	autoxywh("dispYEdit","y")
@@ -1032,7 +1006,7 @@ _Main_GuiSize:
 	autoxywh("lblHCoord","y")
 	autoxywh("btnSelectWin","y")
 	autoxywh("btnSaveCoords","y")
-	autoxywh("lblCurrentProfile", "xy")
+	autoxywh("lblCurrentProfile", "wxy", true)
 	return
 }
 
@@ -1057,7 +1031,7 @@ adjustWindow(sMode, win, x, y, w, h) {
 		;~ WinMove, %win%,, %x%, %y%, %w%, %h%
 	}
 }
-ClearGui2(cSeqId) {
+resetEditGui(cSeqId) {
 	Gui, _Edit_:Default
 	GuiControl,, txtCurrentSeqId, % cSeqId
 	GuiControl,, EditTitleLabel
@@ -1092,7 +1066,7 @@ cleanString(list) {
 	StringReplace, list, list, `,`,, `,, All
 	return, list
 }
-findEntryByTitle(t) {
+findItemByTitle(t) {
 	global WinArray
 	for k, v in WinArray {
 		if (v.Title == t) {
@@ -1110,8 +1084,8 @@ populateCloneDropdown() {
 	for k, v in WinArray {
 		lst .= v.Title "`n"
 	}
-	GuiControl, _Edit_:, DDLClone, % lst
-	GuiControl, Choose, DDLClone, Clone another window's position
+	GuiControl, _Edit_:, ddlCloneCoordinates, % lst
+	GuiControl, Choose, ddlCloneCoordinates, Clone another window's position
 }
 selectActiveProfile(item) {
 	global config
