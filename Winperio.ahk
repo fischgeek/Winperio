@@ -177,19 +177,23 @@ class Guid {
 	Gui, +AlwaysOnTop
 	Gui, Color, White
 	Gui, Margin, 10, 10
-	Gui, Font, s9, Segoe UI
+	Gui, Font, s15, Segoe UI
 	Gui, Add, Text, vEditTitleLabel w400
 	
-	Gui, Add, Button, Section xm, Select a Window ; gSelect vbtnSelectWin
+	Gui, Font, s9, Segoe UI
+	
+	Gui, Add, Button, Section xm gSelectAWindow vbtnSelectWin, Select a Window
 	
 	Gui, Add, Radio, Section vEditRadMoveID, Window:
 	Gui, Add, Radio, yp+35, Class:
 	Gui, Add, Radio, yp+35, Process:
-	Gui, Add, Radio, yp+35, Custom:
+	Gui, Add, Radio, yp+35 disabled, Custom:
 	Gui, Add, Edit, ys w300 vEditdispWin
 	Gui, Add, Edit, wp vEditdispClass
 	Gui, Add, Edit, wp vEditdispProc
-	Gui, Add, Edit, wp vEditdispCustom
+	Gui, Add, Edit, wp vEditdispCustom disabled
+	
+	Gui, Add, Text, xm
 	
 	Gui, Add, Text, Section xm w70, X:
 	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
@@ -436,9 +440,9 @@ ShowAddNew:
 {
 	Gui, _Edit_:Default
 	ClearGui2()
+	GuiControl,, EditTitleLabel, Add
 	Gui, Show, AutoSize Center, Winperio
 	selectMode := 1
-	SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
 	return
 }
@@ -449,6 +453,7 @@ Edit:
 	LV_GetText(EditSelectedEntry, selectedRow, 1)
 	Gui, _Edit_:Default
 	ClearGui2()
+	GuiControl,, EditTitleLabel, Edit
 	IniRead, EditthisMoveID, %config%, % EditSelectedEntry, MoveID ; get moveID
 	IniRead, EditthisDispWin, %config%, % EditSelectedEntry, Title ; get title
 	IniRead, EditthisDispClass, %config%, % EditSelectedEntry, Class ; get class
@@ -457,7 +462,7 @@ Edit:
 	IniRead, EditthisDispY, %config%, % EditSelectedEntry, Y ; get y
 	IniRead, EditthisDispW, %config%, % EditSelectedEntry, W ; get w
 	IniRead, EditthisDispH, %config%, % EditSelectedEntry, H ; get h
-	GuiControl,, EditTitleLabel, % "You are editing: " EditSelectedRowText
+	;~ GuiControl,, EditTitleLabel, % "You are editing: " EditSelectedRowText
 	GuiControl,, EditDispWin, % EditThisDispWin
 	GuiControl,, EditDispClass, % EditThisDispClass
 	GuiControl,, EditDispProc, % EditThisDispProc
@@ -494,7 +499,7 @@ Edit:
 	existingEntries := ""
 	Gui, Show, AutoSize Center, Winperio 2.0 - Edit
 	selectMode := 1
-	SetTimer, WatchWinEdit, 100
+	;~ SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
 	return
 }
@@ -504,7 +509,7 @@ EditSave:
 	Gui, _Edit_:Default
 	Gui, Submit
 	selectMode := 0
-	SetTimer, WatchWinEdit, Off
+	;~ SetTimer, WatchWinEdit, Off
 	if (EditRadMoveID = 0)
 	{
 		MsgBox, 4144, Window Management, Please select a radio button for the MoveID. This will determine how the program will identify the window.
@@ -551,9 +556,75 @@ EditCancel:
 {
 	Gui, _Edit_:Hide
 	selectMode := 0
-	SetTimer, WatchWinEdit, Off
+	;~ SetTimer, WatchWinEdit, Off
 	ClearGui2()
 	SetTimer, GetActiveWin, On
+	return
+}
+
+SelectAWindow:
+{
+	selectMode := 1
+	Gui, _Main_:Default
+	GuiControl, Hide, btnSelectWin
+	GuiControl, Show, btnCancelSelect
+	GuiControl, Enable, btnSaveCoords
+	SetTimer, GetActiveWin, Off
+	SetTimer, WatchWin, 100
+	return
+}
+
+CancelSelectAWindow:
+{
+	selectMode := 0
+	;~ SetTimer, WatchWin, Off
+	targetWindow := watchingWindow := 
+	Gui, _Main_:Default
+	GuiControl, Show, btnSelectWin
+	GuiControl, Hide, btnCancelSelect
+	GuiControl, Disable, btnSaveCoords
+	GuiControl,, dispWin
+	GuiControl,, dispClass
+	GuiControl,, dispProc
+	GuiControl,, dispX
+	GuiControl,, dispY
+	GuiControl,, dispW
+	GuiControl,, dispH
+	GuiControl,, RadMoveID, 1 ; select the first radio to unselect others
+	GuiControl,, RadMoveID, 0 ; unselect the first radio to make all unselected
+	SetTimer, GetActiveWin, Off
+	return
+}
+
+EditWinXCoordChanged:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	;~ adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
+	return
+}
+
+EditWinYCoordChanged:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	;~ adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
+	return
+}
+
+EditWinWCoordChanged:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	;~ adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
+	return
+}
+
+EditWinHCoordChanged:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	;~ adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
 	return
 }
 
@@ -644,71 +715,24 @@ DeleteProfile:
 	return
 }
 
-Select:
-{
-	selectMode := 1
-	Gui, _Main_:Default
-	GuiControl, Hide, btnSelectWin
-	GuiControl, Show, btnCancelSelect
-	GuiControl, Enable, btnSaveCoords
-	SetTimer, WatchWin, 100
-	return
-}
-
-CancelSelect:
-{
-	selectMode := 0
-	SetTimer, WatchWin, Off
-	targetWindow := watchingWindow := 
-	Gui, _Main_:Default
-	GuiControl, Show, btnSelectWin
-	GuiControl, Hide, btnCancelSelect
-	GuiControl, Disable, btnSaveCoords
-	GuiControl,, dispWin
-	GuiControl,, dispClass
-	GuiControl,, dispProc
-	GuiControl,, dispX
-	GuiControl,, dispY
-	GuiControl,, dispW
-	GuiControl,, dispH
-	GuiControl,, RadMoveID, 1 ; select the first radio to unselect others
-	GuiControl,, RadMoveID, 0 ; unselect the first radio to make all unselected
-	return
-}
-
 WatchWin:
-{
-	Gui, _Main_:Default
-	WinGetTitle, watchingWindow, A
-	if (watchingWindow == "Winperio")
-		return
-	targetWindow := watchingWindow
-	WinGet, winProc, ProcessName, %watchingWindow%
-	WinGetClass, winClass, %watchingWindow%
-	WinGetPos, winX, winY, winW, winH, %watchingWindow%
-	GuiControl,, dispWin, % watchingWindow
-	GuiControl,, dispClass, % winClass
-	GuiControl,, dispProc, % winProc
-	GuiControl,, dispX, % winX
-	GuiControl,, dispY, % winY
-	GuiControl,, dispW, % winW
-	GuiControl,, dispH, % winH
-	return
-}
-
-WatchWinEdit:
 {
 	Gui, _Edit_:Default
 	WinGetTitle, watchingWindow, A
-	if (watchingWindow == "Winperio" || watchingWindow == "Winperio 2.0 - Edit")
-		return
-	targetWindow := watchingWindow
-	WinGetPos, winX, winY, winW, winH, %watchingWindow%
-	GuiControl,, EditdispX, % winX
-	GuiControl,, EditdispY, % winY
-	GuiControl,, EditdispW, % winW
-	GuiControl,, EditdispH, % winH
-	debug(winH)
+	if (watchingWindow != "Winperio") {
+		;~ MsgBox, 4096,,  % watchingWindow
+		targetWindow := watchingWindow
+		WinGet, winProc, ProcessName, %watchingWindow%
+		WinGetClass, winClass, %watchingWindow%
+		WinGetPos, winX, winY, winW, winH, %watchingWindow%
+		GuiControl,, EditdispWin, % watchingWindow
+		GuiControl,, EditdispClass, % winClass
+		GuiControl,, EditdispProc, % winProc
+		GuiControl,, EditdispX, % winX
+		GuiControl,, EditdispY, % winY
+		GuiControl,, EditdispW, % winW
+		GuiControl,, EditdispH, % winH
+	}
 	return
 }
 
@@ -938,27 +962,11 @@ WinXCoordChanged:
 	return
 }
 
-EditWinXCoordChanged:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
-	return
-}
-
 WinYCoordChanged:
 {
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
 	adjustWindow(selectMode, targetWindow, dispX, dispY, dispW, dispH)
-	return
-}
-
-EditWinYCoordChanged:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
 	return
 }
 
@@ -970,27 +978,11 @@ WinWCoordChanged:
 	return
 }
 
-EditWinWCoordChanged:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
-	return
-}
-
 WinHCoordChanged:
 {
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
 	adjustWindow(selectMode, targetWindow, dispX, dispY, dispW, dispH)
-	return
-}
-
-EditWinHCoordChanged:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	adjustWindow(selectMode, EditSelectedRowText, EditDispX, EditDispY, EditDispW, EditDispH)
 	return
 }
 
@@ -1101,7 +1093,7 @@ _Main_GuiClose:
 
 adjustWindow(sMode, win, x, y, w, h) {
 	if (sMode) {
-		WinMove, %win%,, %x%, %y%, %w%, %h%
+		;~ WinMove, %win%,, %x%, %y%, %w%, %h%
 	}
 }
 ClearGui2() {
