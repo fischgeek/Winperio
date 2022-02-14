@@ -54,12 +54,18 @@ Icon_7=0
 	Try
 		Menu, tray, Icon, %cPath%\winperio.ico
 	SysGet, monCount, MonitorCount
-	
 	IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
-	;~ IniRead, seqno, %config%, Settings, Sequence
-	IniRead, sections, %config%
 	WinArray := getSavedWindows()
+	ProfileWinArray := getProfileWinArray(currentActiveProfile)
+	TitleMatchArray := getMatchArray(1)
+	ClassMatchArray := getMatchArray(2)
+	ProcessMatchArray := getMatchArray(3)
+	Log.Write("WinArray Length: " WinArray.Count())
+	Log.Write("ProfileWinArray Length: " ProfileWinArray.Count())
+	Log.Write("TitleMatchArray Length: " TitleMatchArray.Count())
+	Log.Write("ClassMatchArray Length: " ClassMatchArray.Count())
+	Log.Write("ProcessMatchArray Length: " ProcessMatchArray.Count())
 }
 
 { ; main gui
@@ -77,6 +83,7 @@ Icon_7=0
 	Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
 	Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
+	populateListView()
 }
 
 { ; add/edit gui
@@ -166,7 +173,7 @@ Icon_7=0
 Gui, Show, AutoSize Center, Winperio
 ;~ SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
-gosub, DataFetch
+;~ gosub, DataFetch
 return ; end of auto-execution section
 
 ; file-menu
@@ -707,46 +714,7 @@ GetWinCoords:
 		, WinArray[k].Width
 		, WinArray[k].Height) ; display in listview
 	}
-	;~ Loop, Parse, sections, `n
-	;~ {
-		;~ checkSeqID := A_LoopField
-		;~ if (checkSeqID = "Settings") ; skip the settings section
-			;~ continue
-		;~ IniRead, thisProfile, %config%, % checkSeqID, Profile
-		;~ if (thisProfile != currentProfile)
-			;~ continue
-		;~ IniRead, Seq, %config%, % checkSeqID, SequenceID ; get the sequence number
-		;~ if (Seq = "ERROR") ; if no sequence exists,
-			;~ continue ; continue to next iteration
-		;~ IniRead, thisMoveID, %config%, % checkSeqID, MoveID ; get moveID
-		;~ IniRead, thisDispWin, %config%, % checkSeqID, Title ; get title
-		;~ IniRead, thisDispClass, %config%, % checkSeqID, Class ; get class
-		;~ IniRead, thisDispProc, %config%, % checkSeqID, Process ; get process
-		;~ IniRead, thisDispX, %config%, % checkSeqID, X ; get x
-		;~ IniRead, thisDispY, %config%, % checkSeqID, Y ; get y
-		;~ IniRead, thisDispW, %config%, % checkSeqID, W ; get w
-		;~ IniRead, thisDispH, %config%, % checkSeqID, H ; get h
-		;~ if (thisMoveID = 1) ; if moveID is based on title
-		;~ {
-			;~ TitleMatchList .= thisDispWin "," ; add it to the matchlist
-			;~ TitleSequenceList .= Seq "," ; add it to the sequence matchlist
-		;~ }
-		;~ else if (thisMoveID = 2) ; if moveID is based on ahk_class
-		;~ {
-			;~ ClassMatchList .= thisDispClass "," ; add it to the matchlist
-			;~ ClassSequenceList .= Seq "," ; add it to the sequence matchlist
-		;~ }
-		;~ else if (thisMoveID = 3) ; if moveID is based on process
-		;~ {
-			;~ ProcessMatchList .= thisDispProc "," ; add it to the matchlist
-			;~ ProcessSequenceList .= Seq "," ; add it to the sequence matchlist
-		;~ }
-		;~ thisMoveID := (thisMoveID = 1 ? "Title" : thisMoveID = 2 ? "Class" : thisMoveID = 3 ? "Process" : "ERROR")
-		;~ LV_Add("", Seq, thisMoveID, thisDispWin, thisDispClass, thisDispProc, thisdispX, thisDispY, thisDispW, thisDispH) ; display in listview
-	;~ }
-	Loop, % LV_GetCount("Col") ; get number of columns
-		LV_ModifyCol(A_Index, "autohdr") ; auto adjust header columns
-	LV_ModifyCol(1, "Integer")
+	adjustColumnWidths()
 	return
 }
 
@@ -954,6 +922,12 @@ _Main_GuiClose:
 	return
 }
 
+adjustColumnWidths() {
+	global
+	Gui, _Main_:Default
+	Loop, % LV_GetCount("Column")
+		LV_ModifyCol(A_Index, "AutoHdr")
+}
 adjustWindow(sMode, win, x, y, w, h) {
 	if (sMode) {
 		;~ WinMove, %win%,, %x%, %y%, %w%, %h%
@@ -1006,6 +980,26 @@ findItemByTitle(t) {
 m(msg) {
 	MsgBox, 4096,, %msg%
 }
+getMatchArray(matchTypeId) {
+	global WinArray
+	x := []
+	for k, v in WinArray {
+		if (v.MoveID == matchTypeId) {
+			x[v.SequenceID] := v
+		}
+	}
+	return x
+}
+getProfileWinArray(currentActiveProfile) {
+	global WinArray
+	o := []
+	for k, v in WinArray {
+		if (v.Profile == currentActiveProfile) {
+			o[v.SequenceID] := v
+		}
+	}
+	return o
+}
 getSavedWindows() {
 	global config, Window
 	IniRead, sections, %config%
@@ -1025,10 +1019,44 @@ getSavedWindows() {
 		IniRead, h, %config%, 	%seq%, H
 		IniRead, m, %config%, 	%seq%, MoveID
 		win := new Window(seq, pro, t, c, p, x, y, w, h, m)
-		Log.Write("Getting " win.Title )
-		w[win.SequenceID] := win
+		;~ Log.Write("Getting " win.Title)
+		wa[win.SequenceID] := win
 	}
-	return w
+	return wa
+}
+populateListView() {
+	global config, WinArray
+	Log.Write("Populate ListView start")
+	Gui, _Main_:Default
+	LV_Delete()
+	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile
+	Log.Write("currentActiveProfile: " currentActiveProfile)
+	Log.Write(WinArray.Length())
+	for k, v in WinArray 
+	{
+		;~ Log.Write("k: " k)
+		;~ Log.Write("v: " v.SequenceID)
+		if (v.Profile == currentActiveProfile)
+		{
+			thisMoveID := v.MoveID
+			thisDisplayWin := v.Title
+			thisDisplayClass := v.Class
+			thisDisplayProc := v.Process
+			thisMoveID_string := (thisMoveID = 1 ? "Title" : thisMoveID = 2 ? "Class" : thisMoveID = 3 ? "Process" : "ERROR")
+			LV_Add(""
+			, v.SequenceID
+			, thisMoveID_string
+			, thisDisplayWin
+			, thisDisplayClass
+			, thisDisplayProc
+			, v.XCoord
+			, v.YCoord
+			, v.Width
+			, v.Height)
+		}
+	}
+	adjustColumnWidths()
+	Log.Write("Populate list view end")
 }
 populateCloneDropdown() {
 	global WinArray
