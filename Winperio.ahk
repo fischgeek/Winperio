@@ -42,44 +42,6 @@ if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
 	ExitApp
 }
 
-; classes
-class Window {
-	SequenceID:=
-	Profile:=
-	Title:=
-	Class:=
-	Process:=
-	XCoord:=
-	YCoord:=
-	Width:=
-	Height:=
-	MoveID:=
-	
-	__New(s, pro, t, c, p, x, y, w, h, m) {
-		this.SequenceID := s
-		this.Profile := pro
-		this.Title := t
-		this.Class := c
-		this.Process := p
-		this.XCoord := x
-		this.YCoord := y
-		this.Width := w
-		this.Height := h
-		this.MoveID := m
-	}
-}
-class Guid {
-	static CharList := ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
-	Small() {
-		g := ""
-		Loop, 8
-		{
-			Random, var, 1, 16
-			g .= Guid.CharList[var]
-		}
-		return g
-	}
-}
 { ; housekeeping
 	#SingleInstance, Force
 	#Persistent
@@ -150,7 +112,7 @@ class Guid {
 
 { ; add/edit gui
 	Gui, _Edit_:Default
-	Gui, +AlwaysOnTop +Delimiter`n
+	Gui, +MinSize +Resize +AlwaysOnTop +Delimiter`n
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
@@ -163,13 +125,13 @@ class Guid {
 	Gui, Add, Radio, Section vEditRadMoveID, Window:
 	Gui, Add, Radio, yp+35, Class:
 	Gui, Add, Radio, yp+35, Process:
-	Gui, Add, Radio, yp+35 Disabled, Custom:
+	Gui, Add, Radio, yp+35 Disabled, RegEx:
 	Gui, Add, Edit, ys w300 vEditdispWin
 	Gui, Add, Edit, wp vEditdispClass
 	Gui, Add, Edit, wp vEditdispProc
-	Gui, Add, Edit, wp vEditdispCustom Disabled
+	Gui, Add, Edit, wp vEditDispRegEx Disabled
 	
-	Gui, Add, Edit, xm w200 vtxtCurrentSeqId Hidden
+	Gui, Add, Edit, xm w200 vtxtCurrentSeqId
 	
 	Gui, Add, Text, Section xm w70, X:
 	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
@@ -190,7 +152,7 @@ class Guid {
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
-	Gui, Add, DDL, ys w250 Sort gCoordClone vddlCloneCoordinates
+	Gui, Add, DDL, ys w250 Sort gCoordCloneDropdownItemChanged vddlCloneCoordinates
 }
 
 { ; menus
@@ -236,8 +198,6 @@ Gui, Show, AutoSize Center, Winperio
 SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
 gosub, DataFetch
-
-
 return ; end of auto-execution section
 
 ; file-menu
@@ -417,7 +377,7 @@ Remove:
 ShowAddNew:
 {
 	Gui, _Edit_:Default
-	newId := Guid.Small()
+	newId := Utils.SmallGuid()
 	resetEditGui(newId)
 	GuiControl,, EditTitleLabel, Add
 	Gui, Show, AutoSize Center, Winperio
@@ -568,7 +528,7 @@ EditWinHCoordChanged:
 	return
 }
 
-CoordClone:
+CoordCloneDropdownItemChanged:
 {
 	Gui, _Edit_:Default
 	Gui, Submit, NoHide
@@ -578,8 +538,7 @@ CoordClone:
 		ExitApp
 	}
 	currentItem := WinArray[txtCurrentSeqId]
-	m(cloneItem.SequenceId "`n" txtCurrentSeqId)
-	MsgBox, 4132, Winperio, % "Are you sure you want apply the new coordinates?`n`nx: " cloneItem.XCoord "`ny: " cloneItem.YCoord "`nw: " cloneItem.Width "`nh: " cloneItem.Height
+	MsgBox, 4132, Winperio, % "Are you sure you want apply the new coordinates?`n`nx:  " cloneItem.XCoord "`ny:  " cloneItem.YCoord "`nw: " cloneItem.Width "`nh:  " cloneItem.Height
 	IfMsgBox, Yes
 	{
 		GuiControl,, EditDispX, % cloneItem.XCoord
@@ -980,6 +939,20 @@ CheckForUpdates:
 	return
 }
 
+_Edit_GuiSize:
+{
+	Gui, _Edit_:Default
+	Gui, +LastFound
+	autoxywh("EditdispWin", "w")
+	autoxywh("EditdispClass", "w")
+	autoxywh("EditdispProc", "w")
+	autoxywh("EditDispRegEx", "w")
+	autoxywh("btnEditSave", "y")
+	autoxywh("btnEditCancel", "y")
+	autoxywh("ddlCloneCoordinates", "y")
+	return
+}
+
 _Main_GuiSize:
 {
 	Gui, _Main_:Default
@@ -990,23 +963,9 @@ _Main_GuiSize:
 	autoxywh("btnRemove","y")
 	autoxywh("btnEdit","y")
 	autoxywh("btnSetWindows", "y")
-	autoxywh("dispXEdit","y")
-	autoxywh("dispY","y")
-	autoxywh("dispYEdit","y")
-	autoxywh("dispW","y")
-	autoxywh("dispWEdit","y")
-	autoxywh("dispH","y")
-	autoxywh("dispHEdit","y")
-	autoxywh("radMoveId","y", true)
-	autoxywh("Class:","y", true)
-	autoxywh("Process:","y", true)
-	autoxywh("lblXCoord","y")
-	autoxywh("lblYCoord","y")
-	autoxywh("lblWCoord","y")
-	autoxywh("lblHCoord","y")
 	autoxywh("btnSelectWin","y")
 	autoxywh("btnSaveCoords","y")
-	autoxywh("lblCurrentProfile", "wxy", true)
+	autoxywh("lblCurrentProfile", "y")
 	return
 }
 
