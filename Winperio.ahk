@@ -88,7 +88,7 @@ class Guid {
 	SetTitleMatchMode, 2
 	fileVersion = 3.0.8
 	cPath := A_AppData "\Winperio"
-	config := cPath "\Winperio.ini"
+	config := cPath "\winperio.ini"
 	host := "http://fischgeek.com/winperio"
 	;~ gosub, CheckForUpdates
 	IfNotExist, %cPath%
@@ -174,29 +174,40 @@ class Guid {
 
 { ; add/edit gui
 	Gui, _Edit_:Default
-	Gui, +AlwaysOnTop +ToolWindow
+	Gui, +AlwaysOnTop
 	Gui, Color, White
+	Gui, Margin, 10, 10
 	Gui, Font, s9, Segoe UI
 	Gui, Add, Text, vEditTitleLabel w400
-	Gui, Add, Radio, section xp+15 yp+25 vEditRadMoveID, Window:
-	Gui, Add, Radio, yp+30, Class:
-	Gui, Add, Radio, yp+30, Process:
-	Gui, Add, Text, yp+28, X:
-	Gui, Add, Text,, Y:
-	Gui, Add, Text,, W:
-	Gui, Add, Text,, H:
+	
+	Gui, Add, Button, Section xm, Select a Window ; gSelect vbtnSelectWin
+	
+	Gui, Add, Radio, Section vEditRadMoveID, Window:
+	Gui, Add, Radio, yp+35, Class:
+	Gui, Add, Radio, yp+35, Process:
+	Gui, Add, Radio, yp+35, Custom:
 	Gui, Add, Edit, ys w300 vEditdispWin
 	Gui, Add, Edit, wp vEditdispClass
 	Gui, Add, Edit, wp vEditdispProc
-	Gui, Add, Edit, wp gEditWinXCoordChanged
+	Gui, Add, Edit, wp vEditdispCustom
+	
+	Gui, Add, Text, Section xm w70, X:
+	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
 	Gui, Add, UpDown, vEditdispX gEditWinXCoordChanged 0x80 Range-2147483648-2147483647
-	Gui, Add, Edit, wp gEditWinYCoordChanged
+	
+	Gui, Add, Text, Section xm w70, Y:
+	Gui, Add, Edit, ys w90 gEditWinYCoordChanged
 	Gui, Add, UpDown, vEditdispY gEditWinYCoordChanged 0x80 Range-2147483648-2147483647
-	Gui, Add, Edit, wp gEditWinWCoordChanged
+	
+	Gui, Add, Text, Section xm w70, W:
+	Gui, Add, Edit, ys w90 gEditWinWCoordChanged
 	Gui, Add, UpDown, vEditdispW gEditWinWCoordChanged 0x80 Range-2147483648-2147483647
-	Gui, Add, Edit, wp gEditWinHCoordChanged
+	
+	Gui, Add, Text, Section xm w70, H:
+	Gui, Add, Edit, ys w90 gEditWinHCoordChanged
 	Gui, Add, UpDown, vEditdispH gEditWinHCoordChanged 0x80 Range-2147483648-2147483647
-	Gui, Add, Text
+	
+	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
 	Gui, Add, DDL, ys w250 Sort gCoordClone vDDLClone, Clone attributes of another window||
