@@ -58,9 +58,9 @@ Icon_7=0
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
 	WinArray := getSavedWindows()
 	ProfileWinArray := getProfileWinArray(currentActiveProfile)
-	TitleMatchArray := getMatchArray(1)
-	ClassMatchArray := getMatchArray(2)
-	ProcessMatchArray := getMatchArray(3)
+	ProfileTitleMatchArray := getMatchArray(1, currentActiveProfile)
+	ProfileClassMatchArray := getMatchArray(2, currentActiveProfile)
+	ProfileProcessMatchArray := getMatchArray(3, currentActiveProfile)
 	Log.Write("WinArray Length: " WinArray.Count())
 	Log.Write("ProfileWinArray Length: " ProfileWinArray.Count())
 	Log.Write("TitleMatchArray Length: " TitleMatchArray.Count())
@@ -171,7 +171,7 @@ Icon_7=0
 
 ;~ if (trayTipCount < 3)
 Gui, Show, AutoSize Center, Winperio
-;~ SetTimer, GetActiveWin, 100
+SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
 ;~ gosub, DataFetch
 return ; end of auto-execution section
@@ -208,14 +208,12 @@ FileExit:
 	ExitApp
 }
 
-; /file-menu
 ; profile-menu
 
 ProfileMenuItems:
 {
 	Gui, _Main_:Default
 	selectActiveProfile(A_ThisMenuItem)
-	gosub, GetWinCoords
 	return
 }
 
@@ -254,11 +252,9 @@ ProfileMenuSync:
 		selectActiveProfile(activeProfile)
 		GuiControl,, lblCurrentProfile, % "Current Profile: " activeProfile
 	}
-	gosub, GetWinCoords
 	return
 }
 
-; /profile-menu
 ; help-menu
 
 HelpAbout:
@@ -284,13 +280,11 @@ HelpUninstall:
 	ExitApp
 }
 
-; /help-menu
 ; tray-context-menu
 
 MenuWinManage:
 {
 	Gui, _Main_:Default
-	gosub, GetWinCoords
 	Gui, Show, AutoSize Center, Winperio
 	return
 }
@@ -313,7 +307,6 @@ MenuExit:
 	ExitApp
 }
 
-; /tray-context-menu
 ; main-ui
 
 SelectedItem:
@@ -342,12 +335,10 @@ Remove:
 		GuiControl, Disable, btnEdit
 		IniDelete, %config%, % selectedEntry
 		WinArray.Delete(WinArray[selectedEntry].SequenceID)
-		gosub, GetWinCoords
 	}
 	return
 }
 
-; /main-ui
 ; add-edit
 
 ShowAddNew:
@@ -422,7 +413,6 @@ EditSave:
 	WinArray[EditSelectedEntry].Class := EditDispClass
 	WinArray[EditSelectedEntry].Process := EditDispProc
 	WinArray[EditSelectedEntry].MoveID := EditRadMoveID
-	gosub, GetWinCoords
 	SetTimer, GetActiveWin, On
 	return
 }
@@ -524,7 +514,8 @@ CoordCloneDropdownItemChanged:
 	}
 	return
 }
-; /add-edit
+
+
 
 SetAll:
 {
@@ -565,7 +556,6 @@ AddProfile:
 	selectActiveProfile(newProfileName)
 	gosub, BuildProfilesGui
 	Gui, Show
-	gosub, GetWinCoords
 	return
 }
 
@@ -669,52 +659,6 @@ SaveCoords:
 	GuiControl, Hide, btnCancelSelect
 	WinArray[sequence] := new Window(sequence, currentActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID)
 	selectMode := 0
-	gosub, GetWinCoords
-	return
-}
-
-GetWinCoords:
-{
-	Gui, _Main_:Default
-	GuiControl, Focus, btnSelect
-	LV_Delete()
-	TitleMatchList := ClassMatchList := ProcessMatchList := ""
-	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile
-	;~ IniRead, sections, %config%
-	for k, v in WinArray 
-	{
-		if (WinArray[k].Profile != currentActiveProfile)
-			continue
-		thisMoveID := WinArray[k].MoveID
-		thisDisplayWin := WinArray[k].Title
-		thisDisplayClass := WinArray[k].Class
-		thisDisplayProc := WinArray[k].Process
-		if (thisMoveID = 1) ; if moveID is based on title
-		{
-			TitleMatchList .= thisDisplayWin "," ; add it to the matchlist
-		}
-		else if (thisMoveID = 2) ; if moveID is based on ahk_class
-		{
-			ClassMatchList .= thisDisplayClass "," ; add it to the matchlist
-		}
-		else if (thisMoveID = 3) ; if moveID is based on process
-		{
-			ProcessMatchList .= thisDisplayProc "," ; add it to the matchlist
-		}
-		thisMoveID_string := (thisMoveID = 1 ? "Title" : thisMoveID = 2 ? "Class" : thisMoveID = 3 ? "Process" : "ERROR")
-		;~ MsgBox, % thisMoveID_string "`n" thisMoveID "`n"WinArray[k].MoveID
-		LV_Add(""
-		, WinArray[k].SequenceID
-		, thisMoveID_string
-		, thisDisplayWin
-		, thisDisplayClass
-		, thisDisplayProc
-		, WinArray[k].XCoord
-		, WinArray[k].YCoord
-		, WinArray[k].Width
-		, WinArray[k].Height) ; display in listview
-	}
-	adjustColumnWidths()
 	return
 }
 
@@ -723,31 +667,20 @@ GetActiveWin:
 	WinGetActiveTitle, thisActiveTitle
 	WinGetClass, thisActiveClass, A
 	WinGet, thisActiveProcess, ProcessName, A
-	if thisActiveTitle in %TitleMatchList%
-	{
-		For k, v in WinArray
-		{
-			if (WinArray[k].Profile == currentActiveProfile and WinArray[k].Title == thisActiveTitle) {
-				WinMove, % thisActiveTitle,, % WinArray[k].XCoord, % WinArray[k].YCoord, % WinArray[k].Width, % WinArray[k].Height
-			}
+	Log.Write("Active Window: " thisActiveTitle)
+	for k, v in ProfileTitleMatchArray {
+		if (v.Title == thisActiveTitle) {
+			WinMove, % thisActiveTitle,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
 		}
 	}
-	else if thisActiveClass in %ClassMatchList%
-	{
-		For k, v in WinArray
-		{
-			if (WinArray[k].Profile == currentActiveProfile and WinArray[k].Class == thisActiveClass) {
-				WinMove, % "ahk_class " thisActiveClass,, % WinArray[k].XCoord, % WinArray[k].YCoord, % WinArray[k].Width, % WinArray[k].Height
-			}
+	for k, v in ProfileClassMatchArray {
+		if (v.Class == thisActiveClass) {
+			WinMove, % "ahk_class " thisActiveClass,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
 		}
 	}
-	else if thisActiveProcess in %ProcessMatchList%
-	{
-		For k, v in WinArray
-		{
-			if (WinArray[k].Profile == currentActiveProfile and WinArray[k].Process == thisActiveProcess) {
-				WinMove, % thisActiveTitle,, % WinArray[k].XCoord, % WinArray[k].YCoord, % WinArray[k].Width, % WinArray[k].Height
-			}
+	for k, v in ProfileProcessMatchArray {
+		if (v.Process == thisActiveProcess) {
+			WinMove, % "ahk_exe " thisActiveProcess,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
 		}
 	}
 	return
@@ -763,7 +696,6 @@ DataFetch:
 		IfNotExist, %A_Startup%\Winperio.lnk
 			FileCreateShortcut, %A_ScriptDir%\Winperio.exe, %A_Startup%\Winperio.lnk
 	}
-	gosub, GetWinCoords
 	return
 }
 
@@ -828,7 +760,6 @@ CheckScreenCount:
 		selectActiveProfile(monCount "Screen")
 		if (monCount != lastMonCount) {
 			lastMonCount := monCount
-			gosub, GetWinCoords
 		}
 	}
 	return
@@ -980,11 +911,11 @@ findItemByTitle(t) {
 m(msg) {
 	MsgBox, 4096,, %msg%
 }
-getMatchArray(matchTypeId) {
+getMatchArray(matchTypeId, currentActiveProfile) {
 	global WinArray
 	x := []
 	for k, v in WinArray {
-		if (v.MoveID == matchTypeId) {
+		if (v.Profile == currentActiveProfile and v.MoveID == matchTypeId) {
 			x[v.SequenceID] := v
 		}
 	}
