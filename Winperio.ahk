@@ -2,7 +2,7 @@
  * * * Compile_AHK SETTINGS BEGIN * * *
 
 [AHK2EXE]
-Exe_File=%In_Dir%\WinOrg.exe
+Exe_File=%In_Dir%\Winperio.exe
 Compression=0
 No_UPX=1
 [VERSION]
@@ -11,17 +11,17 @@ Company_Name=SoftFisch
 File_Description=A window organization program
 File_Version=2.0.5.169
 Inc_File_Version=0
-Internal_Name=WinOrg
+Internal_Name=Winperio
 Legal_Copyright=All rights reserved.
-Original_Filename=WinOrg
-Product_Name=WinOrg
+Original_Filename=Winperio
+Product_Name=Winperio
 Product_Version=1.1.9.3
 Set_AHK_Version=1
 [ICONS]
-Icon_1=%In_Dir%\custom assets\winorg_idle64x64.ico
-Icon_2=%In_Dir%\custom assets\winorg_idle64x64.ico
+Icon_1=%In_Dir%\custom assets\winperio_idle64x64.ico
+Icon_2=%In_Dir%\custom assets\winperio_idle64x64.ico
 Icon_3=0
-Icon_4=%In_Dir%\custom assets\winorg_pause64x64.ico
+Icon_4=%In_Dir%\custom assets\winperio_pause64x64.ico
 Icon_5=0
 Icon_6=0
 Icon_7=0
@@ -87,9 +87,9 @@ class Guid {
 	#Persistent
 	SetTitleMatchMode, 2
 	fileVersion = 3.0.8
-	cPath := A_AppData "\WinOrg"
-	config := cPath "\WinOrg.ini"
-	host := "http://fischgeek.com/winorg"
+	cPath := A_AppData "\Winperio"
+	config := cPath "\Winperio.ini"
+	host := "http://fischgeek.com/winperio"
 	;~ gosub, CheckForUpdates
 	IfNotExist, %cPath%
 		FileCreateDir, %cPath%
@@ -97,12 +97,12 @@ class Guid {
 	{
 		IniWrite, 0, %config%, Settings, ProfileSync
 	}
-	;~ IfNotExist, %cPath%\winorg.ico
-		;~ URLDownloadToFile, % host "/assets/winorg.ico", %cPath%\winorg.ico
-	;~ IfNotExist, %cPath%\winorgp.ico
-		;~ URLDownloadToFile, % host "/assets/winorgp.ico", %cPath%\winorgp.ico
+	;~ IfNotExist, %cPath%\winperio.ico
+		;~ URLDownloadToFile, % host "/assets/winperio.ico", %cPath%\winperio.ico
+	;~ IfNotExist, %cPath%\winperiop.ico
+		;~ URLDownloadToFile, % host "/assets/winperiop.ico", %cPath%\winperiop.ico
 	Try
-		Menu, tray, Icon, %cPath%\winorg.ico
+		Menu, tray, Icon, %cPath%\winperio.ico
 	SysGet, monCount, MonitorCount
 	
 	IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
@@ -140,7 +140,7 @@ class Guid {
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
-	Gui, Add, Text, Section w940, WinOrg
+	Gui, Add, Text, Section w940, Winperio
 	Gui, Font, s9, Segoe UI
 	Gui, Add, Button, w50 ym gShowAddNew, Add
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Identify By|Title|Class|Process|X|Y|W|H
@@ -241,7 +241,7 @@ class Guid {
 }
 
 ;~ if (trayTipCount < 3)
-Gui, Show, AutoSize Center, WinOrg
+Gui, Show, AutoSize Center, Winperio
 
 SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
@@ -265,14 +265,14 @@ FileRunOnStartup:
 		startToggle := "off"
 		IniWrite, 0, %config%, Settings, RunOnStartup
 		Menu, FileMenu, UnCheck, Run on startup
-		FileDelete, %A_Startup%\WinOrg.lnk
+		FileDelete, %A_Startup%\Winperio.lnk
 	}
 	else,
 	{	
 		startToggle := "on"
 		IniWrite, 1, %config%, Settings, RunOnStartup
 		Menu, FileMenu, Check, Run on startup
-		FileCreateShortcut, %A_ScriptDir%\WinOrg.exe, %A_Startup%\WinOrg.lnk, %A_ScriptDir%,,,,, 7
+		FileCreateShortcut, %A_ScriptDir%\Winperio.exe, %A_Startup%\Winperio.lnk, %A_ScriptDir%,,,,, 7
 	}
 	return
 }
@@ -337,7 +337,7 @@ ProfileMenuSync:
 
 HelpAbout:
 {
-	MsgBox, 64, WinOrg, Version: %fileVersion%`nCreated by: FischGeek
+	MsgBox, 64, Winperio, Version: %fileVersion%`nCreated by: FischGeek
 	return
 }
 
@@ -349,11 +349,11 @@ HelpContact:
 
 HelpUninstall:
 {
-	MsgBox, 35, WinOrg, Are you sure you want to uninstall WinOrg?
+	MsgBox, 35, Winperio, Are you sure you want to uninstall Winperio?
 	IfMsgBox, Yes
 	{
-		URLDownloadToFile, %host%/WinOrgUninstaller.exe, %A_Temp%\WinOrgUninstaller.exe
-		Run, %A_Temp%\WinOrgUninstaller.exe
+		URLDownloadToFile, %host%/WinperioUninstaller.exe, %A_Temp%\WinperioUninstaller.exe
+		Run, %A_Temp%\WinperioUninstaller.exe
 	}
 	ExitApp
 }
@@ -365,7 +365,7 @@ MenuWinManage:
 {
 	Gui, _Main_:Default
 	gosub, GetWinCoords
-	Gui, Show, AutoSize Center, WinOrg
+	Gui, Show, AutoSize Center, Winperio
 	return
 }
 
@@ -425,7 +425,7 @@ ShowAddNew:
 {
 	Gui, _Edit_:Default
 	ClearGui2()
-	Gui, Show, AutoSize Center, WinOrg
+	Gui, Show, AutoSize Center, Winperio
 	selectMode := 1
 	SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
@@ -481,7 +481,7 @@ Edit:
 		GuiControl,, DDLClone, % "|Clone another window's position||" existingEntries
 	}
 	existingEntries := ""
-	Gui, Show, AutoSize Center, WinOrg 2.0 - Edit
+	Gui, Show, AutoSize Center, Winperio 2.0 - Edit
 	selectMode := 1
 	SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
@@ -501,13 +501,13 @@ EditSave:
 	}
 	else if (EditRadMoveID = 2)
 	{
-		MsgBox, 4164, WinOrg 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
+		MsgBox, 4164, Winperio 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
 		IfMsgBox, No
 			return
 	}
 	else if (EditRadMoveID = 3)
 	{
-		MsgBox, 4164, WinOrg 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
+		MsgBox, 4164, Winperio 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
 		IfMsgBox, No
 			return
 	}
@@ -669,7 +669,7 @@ WatchWin:
 {
 	Gui, _Main_:Default
 	WinGetTitle, watchingWindow, A
-	if (watchingWindow == "WinOrg")
+	if (watchingWindow == "Winperio")
 		return
 	targetWindow := watchingWindow
 	WinGet, winProc, ProcessName, %watchingWindow%
@@ -689,7 +689,7 @@ WatchWinEdit:
 {
 	Gui, _Edit_:Default
 	WinGetTitle, watchingWindow, A
-	if (watchingWindow == "WinOrg" || watchingWindow == "WinOrg 2.0 - Edit")
+	if (watchingWindow == "Winperio" || watchingWindow == "Winperio 2.0 - Edit")
 		return
 	targetWindow := watchingWindow
 	WinGetPos, winX, winY, winW, winH, %watchingWindow%
@@ -708,7 +708,7 @@ SaveCoords:
 	SetTimer, WatchWin, Off
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, 0
 	if (!currentActiveProfile) {
-		MsgBox, 4144, WinOrg 2.0, % "Please create a profile first before adding to WinOrg.`n`nYou can create a profile by going to the Profiles menu and selecting ""Manage Profiles"""
+		MsgBox, 4144, Winperio 2.0, % "Please create a profile first before adding to Winperio.`n`nYou can create a profile by going to the Profiles menu and selecting ""Manage Profiles"""
 		return
 	}
 	if (RadMoveID = 0) {
@@ -717,13 +717,13 @@ SaveCoords:
 	}
 	;~ else if (RadMoveID = 2)
 	;~ {
-		;~ MsgBox, 4164, WinOrg 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
+		;~ MsgBox, 4164, Winperio 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
 		;~ IfMsgBox, No
 			;~ return
 	;~ }
 	;~ else if (RadMoveID = 3)
 	;~ {
-		;~ MsgBox, 4164, WinOrg 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
+		;~ MsgBox, 4164, Winperio 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
 		;~ IfMsgBox, No
 		;~ return
 	;~ }
@@ -890,8 +890,8 @@ DataFetch:
 	if (runOnStartupState)
 	{
 		Menu, FileMenu, Check, Run on startup
-		IfNotExist, %A_Startup%\WinOrg.lnk
-			FileCreateShortcut, %A_ScriptDir%\WinOrg.exe, %A_Startup%\WinOrg.lnk
+		IfNotExist, %A_Startup%\Winperio.lnk
+			FileCreateShortcut, %A_ScriptDir%\Winperio.exe, %A_Startup%\Winperio.lnk
 	}
 	gosub, GetWinCoords
 	return
@@ -1019,20 +1019,20 @@ CheckForUpdates:
 	}
 	if (attempt = 5)
 	{
-		MsgBox, 16, WinOrg Update Error, Unable to establish internet connection to check for an update.
+		MsgBox, 16, Winperio Update Error, Unable to establish internet connection to check for an update.
 		return
 	}
-	URLDownloadToFile, %host%/WinOrgConfig.ini, %cPath%\WinOrgConfig.ini
-	IniRead, currentVersion, %cPath%\WinOrgConfig.ini, Settings, Version
+	URLDownloadToFile, %host%/WinperioConfig.ini, %cPath%\WinperioConfig.ini
+	IniRead, currentVersion, %cPath%\WinperioConfig.ini, Settings, Version
 	if (currentVersion = "ERROR")
 		return
-	FileDelete, %cPath%\WinOrgConfig.ini
+	FileDelete, %cPath%\WinperioConfig.ini
 	if (currentVersion != fileVersion) 
 	{
-		IfExist, %cPath%\WinOrgUpdate.exe
-			FileDelete, %cPath%\WinOrgUpdate.exe
-		URLDownloadToFile, %host%/WinOrgUpdate.exe, %cPath%\WinOrgUpdate.exe
-		Run, %cPath%\WinOrgUpdate.exe
+		IfExist, %cPath%\WinperioUpdate.exe
+			FileDelete, %cPath%\WinperioUpdate.exe
+		URLDownloadToFile, %host%/WinperioUpdate.exe, %cPath%\WinperioUpdate.exe
+		Run, %cPath%\WinperioUpdate.exe
 		ExitApp
 	}
 	return
@@ -1081,7 +1081,7 @@ _Main_GuiClose:
 	IniRead, trayTipCount, %config%, Settings, TrayTipCount, 0
 	if (trayTipCount = 3)
 		return
-	TrayTip, WinOrg, WinOrg is still running. You can exit the program by right-clicking this icon and selecting Exit.
+	TrayTip, Winperio, Winperio is still running. You can exit the program by right-clicking this icon and selecting Exit.
 	Sleep, 3000
 	trayTipCount++
 	IniWrite, %trayTipCount%, %config%, Settings, TrayTipCount
