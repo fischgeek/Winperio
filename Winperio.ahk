@@ -29,24 +29,12 @@ Icon_7=0
 * * * Compile_AHK SETTINGS END * * *
 */
 
-full_command_line := DllCall("GetCommandLine", "str")
-if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
 {
-	try
-	{
-		if A_IsCompiled
-			Run *RunAs "%A_ScriptFullPath%" /restart
-		else
-			Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%"
-	}
-	ExitApp
-}
-
-{ ; housekeeping
 	#SingleInstance, Force
 	#Persistent
 	#Include lib\class_log.ahk
 	#Include lib\class_utils.ahk
+	#Include lib\class_window.ahk
 	SetTitleMatchMode, 2
 	fileVersion = 3.0.8
 	cPath := A_AppData "\Winperio"
@@ -71,26 +59,7 @@ if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
 	;~ IniRead, seqno, %config%, Settings, Sequence
 	IniRead, sections, %config%
-	WinArray := Object()
-	;~ Loop, %seqno%
-	Loop, Parse, sections, `n
-	{
-		seq := A_LoopField
-		if (seq == "Settings")
-			continue
-		;~ seq := A_Index
-		IniRead, pro, %config%, %seq%, Profile
-		IniRead, t, %config%, 	%seq%, Title
-		IniRead, c, %config%, 	%seq%, Class
-		IniRead, p, %config%, 	%seq%, Process
-		IniRead, x, %config%, 	%seq%, X
-		IniRead, y, %config%, 	%seq%, Y
-		IniRead, w, %config%, 	%seq%, W
-		IniRead, h, %config%, 	%seq%, H
-		IniRead, m, %config%, 	%seq%, MoveID
-		win := new Window(seq, pro, t, c, p, x, y, w, h, m)
-		WinArray[win.SequenceID] := win
-	}
+	WinArray := getSavedWindows()
 }
 
 { ; main gui
@@ -195,7 +164,7 @@ if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
 
 ;~ if (trayTipCount < 3)
 Gui, Show, AutoSize Center, Winperio
-SetTimer, GetActiveWin, 100
+;~ SetTimer, GetActiveWin, 100
 ;~ SetTimer, CheckVersion, 100
 gosub, DataFetch
 return ; end of auto-execution section
@@ -1036,6 +1005,30 @@ findItemByTitle(t) {
 }
 m(msg) {
 	MsgBox, 4096,, %msg%
+}
+getSavedWindows() {
+	global config, Window
+	IniRead, sections, %config%
+	wa := Object()
+	Loop, Parse, sections, `n
+	{
+		seq := A_LoopField
+		if (seq == "Settings")
+			continue
+		IniRead, pro, %config%, %seq%, Profile
+		IniRead, t, %config%, 	%seq%, Title
+		IniRead, c, %config%, 	%seq%, Class
+		IniRead, p, %config%, 	%seq%, Process
+		IniRead, x, %config%, 	%seq%, X
+		IniRead, y, %config%, 	%seq%, Y
+		IniRead, w, %config%, 	%seq%, W
+		IniRead, h, %config%, 	%seq%, H
+		IniRead, m, %config%, 	%seq%, MoveID
+		win := new Window(seq, pro, t, c, p, x, y, w, h, m)
+		Log.Write("Getting " win.Title )
+		w[win.SequenceID] := win
+	}
+	return w
 }
 populateCloneDropdown() {
 	global WinArray
