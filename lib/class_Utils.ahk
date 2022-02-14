@@ -1,10 +1,5 @@
 class Utils {
 	static lvl := 2
-	JiggleHandle() {
-		WinActivate, ahk_exe Explorer.EXE
-		RQ.Throttle()
-		RQ.Activate()
-	}
 	; windows
 	ActivateWin(win) {
 		Log.Write("Activating " win "...", 3)
@@ -21,11 +16,7 @@ class Utils {
 			WinGetClass, activeClass, A
 			Log.Write("A Current acitve PID: " activePid)
 			Log.Write("A Current active Class: " activeClass)
-			Log.Write("A RQ PID: " RQ.getRqExePid())
-			;~ MsgBox, 4112, % "Report Automation", % "Empty window: " win
-			;~ Utils.AlertCallStack("Failed in Utils.ActivateWin for window: " win)
 			Log.Write("FATAL ERROR TRYING AGAIN")
-			Utils.JiggleHandle()
 			ExitApp
 		}
 		Log.Write(win " is active.")
