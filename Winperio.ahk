@@ -174,7 +174,7 @@ class Guid {
 
 { ; add/edit gui
 	Gui, _Edit_:Default
-	Gui, +AlwaysOnTop
+	Gui, +AlwaysOnTop +Delimiter`n
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
@@ -193,7 +193,7 @@ class Guid {
 	Gui, Add, Edit, wp vEditdispProc
 	Gui, Add, Edit, wp vEditdispCustom disabled
 	
-	Gui, Add, Text, xm
+	Gui, Add, Edit, xm w200 vtxtCurrentSeqId
 	
 	Gui, Add, Text, Section xm w70, X:
 	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
@@ -214,7 +214,7 @@ class Guid {
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
-	Gui, Add, DDL, ys w250 Sort gCoordClone vDDLClone, Clone attributes of another window||
+	Gui, Add, DDL, ys w250 Sort gCoordClone vDDLClone
 }
 
 { ; menus
@@ -403,6 +403,7 @@ MenuExit:
 }
 
 ; /tray-context-menu
+; main-ui
 
 SelectedItem:
 {
@@ -434,12 +435,13 @@ Remove:
 	return
 }
 
+; /main-ui
 ; add-edit
 
 ShowAddNew:
 {
 	Gui, _Edit_:Default
-	ClearGui2()
+	ClearGui2("")
 	GuiControl,, EditTitleLabel, Add
 	Gui, Show, AutoSize Center, Winperio
 	selectMode := 1
@@ -451,52 +453,25 @@ Edit:
 {
 	LV_GetText(EditSelectedRowText, selectedRow, 3)
 	LV_GetText(EditSelectedEntry, selectedRow, 1)
+	w := WinArray[EditSelectedEntry]
 	Gui, _Edit_:Default
-	ClearGui2()
+	ClearGui2(w.SequenceID)
 	GuiControl,, EditTitleLabel, Edit
-	IniRead, EditthisMoveID, %config%, % EditSelectedEntry, MoveID ; get moveID
-	IniRead, EditthisDispWin, %config%, % EditSelectedEntry, Title ; get title
-	IniRead, EditthisDispClass, %config%, % EditSelectedEntry, Class ; get class
-	IniRead, EditthisDispProc, %config%, % EditSelectedEntry, Process ; get process
-	IniRead, EditthisDispX, %config%, % EditSelectedEntry, X ; get x
-	IniRead, EditthisDispY, %config%, % EditSelectedEntry, Y ; get y
-	IniRead, EditthisDispW, %config%, % EditSelectedEntry, W ; get w
-	IniRead, EditthisDispH, %config%, % EditSelectedEntry, H ; get h
-	;~ GuiControl,, EditTitleLabel, % "You are editing: " EditSelectedRowText
-	GuiControl,, EditDispWin, % EditThisDispWin
-	GuiControl,, EditDispClass, % EditThisDispClass
-	GuiControl,, EditDispProc, % EditThisDispProc
-	GuiControl,, EditDispX, % EditThisDispX
-	GuiControl,, EditDispY, % EditThisDispY
-	GuiControl,, EditDispW, % EditThisDispW
-	GuiControl,, EditDispH, % EditThisDispH
-	if (EditthisMoveID = 1)
+	GuiControl,, EditDispWin, % w.Title
+	GuiControl,, EditDispClass, % w.Class
+	GuiControl,, EditDispProc, % w.Process
+	GuiControl,, EditDispX, % w.XCoord
+	GuiControl,, EditDispY, % w.YCoord
+	GuiControl,, EditDispW, % w.Width
+	GuiControl,, EditDispH, % w.Height
+	if (w.MoveID = 1)
 		GuiControl,, EditRadMoveID, 1
-	else if (EditthisMoveID = 2)
+	else if (w.MoveID = 2)
 		GuiControl,, Class, 1
-	else if (EditthisMoveID = 3)
+	else if (w.MoveID = 3)
 		GuiControl,, Process, 1
 	IniRead, currentProfile, %config%, Settings, ActiveProfile
-	IniRead, sections, %config%
-	Loop, Parse, sections, `n
-	{
-		CloneSeq := A_LoopField
-		if (CloneSeq = "Settings") ; skip the settings section
-			continue
-		IniRead, thisProfile, %config%, % CloneSeq, Profile
-		if (thisProfile != currentProfile)
-			continue
-		IniRead, CloneThisDispWin, %config%, % CloneSeq, Title ; get title
-		IniRead, CloneThisDispClass, %config%, % CloneSeq, Class ; get class
-		IniRead, CloneThisDispProc, %config%, % CloneSeq, Process ; get process
-		IniRead, CloneThisDispX, %config%, % CloneSeq, X ; get x
-		IniRead, CloneThisDispY, %config%, % CloneSeq, Y ; get y
-		IniRead, CloneThisDispW, %config%, % CloneSeq, W ; get w
-		IniRead, CloneThisDispH, %config%, % CloneSeq, H ; get h
-		existingEntries .= CloneThisDispWin "|"
-		GuiControl,, DDLClone, % "|Clone another window's position||" existingEntries
-	}
-	existingEntries := ""
+	;~ existingEntries := ""
 	Gui, Show, AutoSize Center, Winperio 2.0 - Edit
 	selectMode := 1
 	;~ SetTimer, WatchWinEdit, 100
@@ -514,18 +489,6 @@ EditSave:
 	{
 		MsgBox, 4144, Window Management, Please select a radio button for the MoveID. This will determine how the program will identify the window.
 		return
-	}
-	else if (EditRadMoveID = 2)
-	{
-		MsgBox, 4164, Winperio 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
-		IfMsgBox, No
-			return
-	}
-	else if (EditRadMoveID = 3)
-	{
-		MsgBox, 4164, Winperio 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
-		IfMsgBox, No
-			return
 	}
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, 0
 	IniWrite, % EditRadMoveID, %config%, % EditSelectedEntry, MoveID
@@ -557,7 +520,7 @@ EditCancel:
 	Gui, _Edit_:Hide
 	selectMode := 0
 	;~ SetTimer, WatchWinEdit, Off
-	ClearGui2()
+	ClearGui2("")
 	SetTimer, GetActiveWin, On
 	return
 }
@@ -628,6 +591,26 @@ EditWinHCoordChanged:
 	return
 }
 
+CoordClone:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	cloneItem := findEntryByTitle(DDLClone)
+	if (entry == 0) {
+		m("ERROR: Entry not found in global array.")
+		ExitApp
+	}
+	currentItem := WinArray[txtCurrentSeqId]
+	MsgBox, 4132, Winperio, % "Are you sure you want apply the new coordinates?`n`nx: " cloneItem.XCoord "`ny: " cloneItem.YCoord "`nw: " cloneItem.Width "`nh: " cloneItem.Height
+	IfMsgBox, Yes
+	{
+		GuiControl,, EditDispX, % cloneItem.XCoord
+		GuiControl,, EditDispY, % cloneItem.YCoord
+		GuiControl,, EditDispW, % cloneItem.Width
+		GuiControl,, EditDispH, % cloneItem.Height
+	}
+	return
+}
 ; /add-edit
 
 SetAll:
@@ -651,28 +634,6 @@ SetAll:
 		}
 	}
 	WinActivate, % activeWin
-	return
-}
-
-CoordClone:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	Loop, 
-	{
-		IniRead, CloneThisTitle, %config%, %A_Index%, Title
-		if (CloneThisTitle != DDLClone)
-			continue
-		IniRead, CloneThisX, %config%, % A_Index, X
-		IniRead, CloneThisY, %config%, % A_Index, Y
-		IniRead, CloneThisW, %config%, % A_Index, W
-		IniRead, CloneThisH, %config%, % A_Index, H
-		break
-	}
-	GuiControl,, EditDispX, % CloneThisX
-	GuiControl,, EditDispY, % CloneThisY
-	GuiControl,, EditDispW, % CloneThisW
-	GuiControl,, EditDispH, % CloneThisH
 	return
 }
 
@@ -1096,8 +1057,9 @@ adjustWindow(sMode, win, x, y, w, h) {
 		;~ WinMove, %win%,, %x%, %y%, %w%, %h%
 	}
 }
-ClearGui2() {
+ClearGui2(cSeqId) {
 	Gui, _Edit_:Default
+	GuiControl,, txtCurrentSeqId, % cSeqId
 	GuiControl,, EditTitleLabel
 	GuiControl,, EditDispWin
 	GuiControl,, EditDispClass
@@ -1108,6 +1070,7 @@ ClearGui2() {
 	GuiControl,, EditDispH
 	GuiControl,, EditRadMoveID, 1
 	GuiControl,, EditRadMoveID, 0
+	populateCloneDropdown()
 }
 cleanString(list) {
 	Loop, 
@@ -1128,6 +1091,27 @@ cleanString(list) {
 	}
 	StringReplace, list, list, `,`,, `,, All
 	return, list
+}
+findEntryByTitle(t) {
+	global WinArray
+	for k, v in WinArray {
+		if (v.Title == t) {
+			return v
+		}
+	}
+	return 0
+}
+m(msg) {
+	MsgBox, 4096,, %msg%
+}
+populateCloneDropdown() {
+	global WinArray
+	lst := "`nClone another window's position`n"
+	for k, v in WinArray {
+		lst .= v.Title "`n"
+	}
+	GuiControl, _Edit_:, DDLClone, % lst
+	GuiControl, Choose, DDLClone, Clone another window's position
 }
 selectActiveProfile(item) {
 	global config
