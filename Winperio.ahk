@@ -670,6 +670,7 @@ GetActiveWin:
 	Log.Write("Active Window: " thisActiveTitle)
 	for k, v in ProfileTitleMatchArray {
 		if (v.Title == thisActiveTitle) {
+			Log.Write("Moving " v.Title)
 			WinMove, % thisActiveTitle,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
 		}
 	}
