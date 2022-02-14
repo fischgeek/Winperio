@@ -1,0 +1,6 @@
+-manually adjusting values for the coordinates should size the window
+
+-when saving an entry only the selection should make it into the listview title,class,process
+
+-coordinates should only take effect if the field(s) have data in them
+	+ ex. if w and h are specified then x and y should not be taken into account when movement occurs
