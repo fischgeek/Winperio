@@ -667,23 +667,41 @@ GetActiveWin:
 	WinGetActiveTitle, thisActiveTitle
 	WinGetClass, thisActiveClass, A
 	WinGet, thisActiveProcess, ProcessName, A
-	Log.Write("Active Window: " thisActiveTitle)
+	WinGet, id, id, A
+	
 	for k, v in ProfileTitleMatchArray {
-		if (v.Title == thisActiveTitle) {
+		if (v.MatchMode = "Contains") {
+			winmove ahk_id %id%
+		}
+		if (v.Title = thisActiveTitle) {
 			Log.Write("Moving " v.Title)
-			WinMove, % thisActiveTitle,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
+			moveWin(thisActiveTitle, v)
 		}
 	}
 	for k, v in ProfileClassMatchArray {
-		if (v.Class == thisActiveClass) {
-			WinMove, % "ahk_class " thisActiveClass,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
+		if (v.Class = thisActiveClass) {
+			Log.Write("Moving " v.Title)
+			moveWin("ahk_class " thisActiveClass, v)
 		}
 	}
 	for k, v in ProfileProcessMatchArray {
-		if (v.Process == thisActiveProcess) {
-			WinMove, % "ahk_exe " thisActiveProcess,, % v.XCoord, % v.YCoord, % v.Width, % v.Height
+		if (v.Process = thisActiveProcess) {
+			Log.Write("Moving " v.Title)
+			moveWin("ahk_exe " thisActiveProcess, v)
 		}
 	}
+	for k, v in ProfileFullCusomMatchArray {
+		if (winactive(v.CustomString)) {
+			Log.Write("Moving " v.Title)
+			moveWin(id, v)
+		}
+	}
+	;~ for k, v in ProfileRegExMatchArray {
+		;~ if (v.Process == thisActiveProcess) {
+			;~ Log.Write("Moving " v.Title)
+			;~ moveWin("ahk_exe " thisActiveProcess, v)
+		;~ }
+	;~ }
 	return
 }
 
@@ -955,6 +973,9 @@ getSavedWindows() {
 		wa[win.SequenceID] := win
 	}
 	return wa
+}
+moveWin(w, wo) {
+	WinMove, % w,, % wo.XCoord, % wo.YCoord, % wo.Width, % wo.Height
 }
 populateListView() {
 	global config, WinArray
