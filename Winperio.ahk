@@ -334,7 +334,6 @@ Remove:
 		GuiControl, Disable, btnRemove
 		GuiControl, Disable, btnEdit
 		IniDelete, %config%, % selectedEntry
-		MsgBox, % WinArray[selectedEntry].SequenceId
 		populateGlobalArrays()
 		; lazy, I know, but just for now.
 		populateListView()
