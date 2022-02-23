@@ -334,7 +334,10 @@ Remove:
 		GuiControl, Disable, btnRemove
 		GuiControl, Disable, btnEdit
 		IniDelete, %config%, % selectedEntry
-		WinArray.Delete(WinArray[selectedEntry].SequenceID)
+		MsgBox, % WinArray[selectedEntry].SequenceId
+		populateGlobalArrays()
+		; lazy, I know, but just for now.
+		populateListView()
 	}
 	return
 }
@@ -407,15 +410,18 @@ EditSave:
 	IniWrite, % EditDispH, %config%, % txtCurrentSeqId, H
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
-	WinArray[txtCurrentSeqId].XCoord := EditDispWin
-	WinArray[txtCurrentSeqId].XCoord := EditDispX
-	WinArray[txtCurrentSeqId].YCoord := EditDispY
-	WinArray[txtCurrentSeqId].Width := EditDispW
-	WinArray[txtCurrentSeqId].Height := EditDispH
-	WinArray[txtCurrentSeqId].Class := EditDispClass
-	WinArray[txtCurrentSeqId].Process := EditDispProc
-	WinArray[txtCurrentSeqId].MoveID := EditRadMoveID
+	populateGlobalArrays()
+	; WinArray[txtCurrentSeqId].XCoord := EditDispWin
+	; WinArray[txtCurrentSeqId].XCoord := EditDispX
+	; WinArray[txtCurrentSeqId].YCoord := EditDispY
+	; WinArray[txtCurrentSeqId].Width := EditDispW
+	; WinArray[txtCurrentSeqId].Height := EditDispH
+	; WinArray[txtCurrentSeqId].Class := EditDispClass
+	; WinArray[txtCurrentSeqId].Process := EditDispProc
+	; WinArray[txtCurrentSeqId].MoveID := EditRadMoveID
 	SetTimer, GetActiveWin, On
+	; lazy, I know, but just for now.
+	populateListView()
 	return
 }
 
@@ -955,6 +961,7 @@ getProfileWinArray(currentActiveProfile) {
 getSavedWindows() {
 	global config, Window
 	IniRead, sections, %config%
+	MsgBox, % sections
 	wa := Object()
 	Loop, Parse, sections, `n
 	{
@@ -978,6 +985,14 @@ getSavedWindows() {
 }
 moveWin(w, wo) {
 	WinMove, % w,, % wo.XCoord, % wo.YCoord, % wo.Width, % wo.Height
+}
+populateGlobalArrays() {
+	global
+	WinArray := getSavedWindows()
+	ProfileWinArray := getProfileWinArray(currentActiveProfile)
+	ProfileTitleMatchArray := getMatchArray(1, currentActiveProfile)
+	ProfileClassMatchArray := getMatchArray(2, currentActiveProfile)
+	ProfileProcessMatchArray := getMatchArray(3, currentActiveProfile)
 }
 populateListView() {
 	global config, WinArray
