@@ -389,30 +389,32 @@ EditSave:
 	Gui, Submit
 	selectMode := 0
 	;~ SetTimer, WatchWinEdit, Off
+
 	if (EditRadMoveID = 0)
 	{
 		MsgBox, 4144, Window Management, Please select a radio button for the MoveID. This will determine how the program will identify the window.
 		return
 	}
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, 0
-	IniWrite, % EditRadMoveID, %config%, % EditSelectedEntry, MoveID
-	IniWrite, % EditDispWin, %config%, % EditSelectedEntry, Title
-	IniWrite, % EditDispClass, %config%, % EditSelectedEntry, Class 
-	IniWrite, % EditDispProc, %config%, % EditSelectedEntry, Process
-	IniWrite, % EditDispX, %config%, % EditSelectedEntry, X 
-	IniWrite, % EditDispY, %config%, % EditSelectedEntry, Y 
-	IniWrite, % EditDispW, %config%, % EditSelectedEntry, W
-	IniWrite, % EditDispH, %config%, % EditSelectedEntry, H
+	IniWrite, % currentActiveProfile, %config%, % txtCurrentSeqId, Profile
+	IniWrite, % EditRadMoveID, %config%, % txtCurrentSeqId, MoveID
+	IniWrite, % EditDispWin, %config%, % txtCurrentSeqId, Title
+	IniWrite, % EditDispClass, %config%, % txtCurrentSeqId, Class 
+	IniWrite, % EditDispProc, %config%, % txtCurrentSeqId, Process
+	IniWrite, % EditDispX, %config%, % txtCurrentSeqId, X 
+	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y 
+	IniWrite, % EditDispW, %config%, % txtCurrentSeqId, W
+	IniWrite, % EditDispH, %config%, % txtCurrentSeqId, H
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
-	WinArray[EditSelectedEntry].XCoord := EditDispWin
-	WinArray[EditSelectedEntry].XCoord := EditDispX
-	WinArray[EditSelectedEntry].YCoord := EditDispY
-	WinArray[EditSelectedEntry].Width := EditDispW
-	WinArray[EditSelectedEntry].Height := EditDispH
-	WinArray[EditSelectedEntry].Class := EditDispClass
-	WinArray[EditSelectedEntry].Process := EditDispProc
-	WinArray[EditSelectedEntry].MoveID := EditRadMoveID
+	WinArray[txtCurrentSeqId].XCoord := EditDispWin
+	WinArray[txtCurrentSeqId].XCoord := EditDispX
+	WinArray[txtCurrentSeqId].YCoord := EditDispY
+	WinArray[txtCurrentSeqId].Width := EditDispW
+	WinArray[txtCurrentSeqId].Height := EditDispH
+	WinArray[txtCurrentSeqId].Class := EditDispClass
+	WinArray[txtCurrentSeqId].Process := EditDispProc
+	WinArray[txtCurrentSeqId].MoveID := EditRadMoveID
 	SetTimer, GetActiveWin, On
 	return
 }
