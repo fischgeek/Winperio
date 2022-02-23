@@ -960,7 +960,6 @@ getProfileWinArray(currentActiveProfile) {
 getSavedWindows() {
 	global config, Window
 	IniRead, sections, %config%
-	MsgBox, % sections
 	wa := Object()
 	Loop, Parse, sections, `n
 	{
