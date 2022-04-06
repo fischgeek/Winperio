@@ -9,8 +9,9 @@ class Window {
 	Width:=
 	Height:=
 	MoveID:=
+	AlwaysOnTop:=
 	
-	__New(s, pro, t, c, p, x, y, w, h, m) {
+	__New(s, pro, t, c, p, x, y, w, h, m, aot) {
 		this.SequenceID := s
 		this.Profile := pro
 		this.Title := t
@@ -21,5 +22,6 @@ class Window {
 		this.Width := w
 		this.Height := h
 		this.MoveID := m
+		this.AlwaysOnTop := aot
 	}
 }

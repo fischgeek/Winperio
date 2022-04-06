@@ -1,34 +1,3 @@
-/*
- * * * Compile_AHK SETTINGS BEGIN * * *
-
-[AHK2EXE]
-Exe_File=%In_Dir%\Winperio.exe
-Compression=0
-No_UPX=1
-[VERSION]
-Set_Version_Info=1
-Company_Name=SoftFisch
-File_Description=A window organization program
-File_Version=2.0.5.169
-Inc_File_Version=0
-Internal_Name=Winperio
-Legal_Copyright=All rights reserved.
-Original_Filename=Winperio
-Product_Name=Winperio
-Product_Version=1.1.9.3
-Set_AHK_Version=1
-[ICONS]
-Icon_1=%In_Dir%\custom assets\winperio_idle64x64.ico
-Icon_2=%In_Dir%\custom assets\winperio_idle64x64.ico
-Icon_3=0
-Icon_4=%In_Dir%\custom assets\winperio_pause64x64.ico
-Icon_5=0
-Icon_6=0
-Icon_7=0
-
-* * * Compile_AHK SETTINGS END * * *
-*/
-
 {
 	#SingleInstance, Force
 	#Persistent
@@ -124,6 +93,8 @@ Icon_7=0
 	Gui, Add, Text, Section xm w70, H:
 	Gui, Add, Edit, ys w90 gEditWinHCoordChanged
 	Gui, Add, UpDown, vEditdispH gEditWinHCoordChanged 0x80 Range-2147483648-2147483647
+
+	Gui, Add, Checkbox, Section xm vcbxAlwaysOnTop, Always on top
 	
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
@@ -171,7 +142,7 @@ Icon_7=0
 
 ;~ if (trayTipCount < 3)
 Gui, Show, AutoSize Center, Winperio
-SetTimer, GetActiveWin, 100
+SetTimer, GetActiveWin, 1000
 ;~ SetTimer, CheckVersion, 100
 ;~ gosub, DataFetch
 return ; end of auto-execution section
@@ -407,6 +378,7 @@ EditSave:
 	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y 
 	IniWrite, % EditDispW, %config%, % txtCurrentSeqId, W
 	IniWrite, % EditDispH, %config%, % txtCurrentSeqId, H
+	IniWrite, % cbxAlwaysOnTop, %config%, % txtCurrentSeqId, AlwaysOnTop
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
 	populateGlobalArrays()
@@ -671,44 +643,84 @@ SaveCoords:
 
 GetActiveWin:
 {
-	WinGetActiveTitle, thisActiveTitle
-	WinGetClass, thisActiveClass, A
-	WinGet, thisActiveProcess, ProcessName, A
-	WinGet, id, id, A
-	
-	for k, v in ProfileTitleMatchArray {
-		if (v.MatchMode = "Contains") {
-			winmove ahk_id %id%
+	; WinGetActiveTitle, thisActiveTitle
+	; WinGetClass, thisActiveClass, A
+	; WinGet, thisActiveProcess, ProcessName, A
+	; WinGet, id, id, A
+
+	WinGet, allWins, List
+	Loop, % allWins
+	{
+		id := allWins%A_Index%
+		WinGet, p, ProcessName, % "ahk_id " id
+		WinGetTitle, t, % "ahk_id " id
+		WinGetClass, c, % "ahk_id " id
+		; fullyMatchableName := t " ahk_class " c " ahk_exe" p
+		
+		for k, v in ProfileTitleMatchArray { 
+			Log.Write("t: " t " ||| v.Title: " v.Title)
+			if (t = v.Title) {
+				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+			}
 		}
-		if (v.Title = thisActiveTitle) {
-			Log.Write("Moving " v.Title)
-			moveWin(thisActiveTitle, v)
+		for k, v in ProfileClassMatchArray {
+			Log.Write("c: " c " ||| v.Class: " v.Class)
+			; regex match
+			if (c = v.Class) {
+				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+			}
+		}
+		for k, v in ProfileProcessMatchArray {
+			Log.Write("p: " p "||| v.Process: " v.Process)
+			WinGetTitle, tt, % "ahk_id " id
+			WinGetActiveTitle, t
+			if (p = v.Process) {
+				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+			}
 		}
 	}
-	for k, v in ProfileClassMatchArray {
-		if (v.Class = thisActiveClass) {
-			Log.Write("Moving " v.Title)
-			moveWin("ahk_class " thisActiveClass, v)
-		}
-	}
-	for k, v in ProfileProcessMatchArray {
-		if (v.Process = thisActiveProcess) {
-			Log.Write("Moving " v.Title)
-			moveWin("ahk_exe " thisActiveProcess, v)
-		}
-	}
-	for k, v in ProfileFullCusomMatchArray {
-		if (winactive(v.CustomString)) {
-			Log.Write("Moving " v.Title)
-			moveWin(id, v)
-		}
-	}
-	;~ for k, v in ProfileRegExMatchArray {
-		;~ if (v.Process == thisActiveProcess) {
-			;~ Log.Write("Moving " v.Title)
-			;~ moveWin("ahk_exe " thisActiveProcess, v)
-		;~ }
-	;~ }
+	return
+	; for k, v in ProfileTitleMatchArray {
+	; 	if (v.MatchMode = "Contains") {
+	; 		WinMove, 
+	; 		WinMove,,, v.XCoord, v.YCoord, v.Width, v.Height
+	; 	}
+	; 	; if (v.Title = thisActiveTitle) {
+	; 	; 	Log.Write("Moving " v.Title)
+	; 	; 	moveWin(thisActiveTitle, v)
+	; 	; }
+	; }
+	; for k, v in ProfileClassMatchArray {
+	; 	if (v.MatchMode = "Contains") {
+	; 		WinMove, ahk_id %id%
+	; 		WinMove,,, v.XCoord, v.YCoord, v.Width, v.Height
+	; 	}
+	; 	; if (v.Class = thisActiveClass) {
+	; 	; 	Log.Write("Moving " v.Title)
+	; 	; 	moveWin("ahk_class " thisActiveClass, v)
+	; 	; }
+	; }
+	; for k, v in ProfileProcessMatchArray {
+	; 	; if (v.Process = thisActiveProcess) {
+	; 	; 	Log.Write("Moving " v.Title)
+	; 	; 	moveWin("ahk_exe " thisActiveProcess, v)
+	; 	; }
+	; }
+	; for k, v in ProfileFullCusomMatchArray {
+	; 	; if (winactive(v.CustomString)) {
+	; 	; 	Log.Write("Moving " v.Title)
+	; 	; 	moveWin(id, v)
+	; 	; }
+	; }
+	; ;~ for k, v in ProfileRegExMatchArray {
+	; 	;~ if (v.Process == thisActiveProcess) {
+	; 		;~ Log.Write("Moving " v.Title)
+	; 		;~ moveWin("ahk_exe " thisActiveProcess, v)
+	; 	;~ }
+	; ;~ }
 	return
 }
 
@@ -975,7 +987,8 @@ getSavedWindows() {
 		IniRead, w, %config%, 	%seq%, W
 		IniRead, h, %config%, 	%seq%, H
 		IniRead, m, %config%, 	%seq%, MoveID
-		win := new Window(seq, pro, t, c, p, x, y, w, h, m)
+		IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
+		win := new Window(seq, pro, t, c, p, x, y, w, h, m, aot)
 		;~ Log.Write("Getting " win.Title)
 		wa[win.SequenceID] := win
 	}
