@@ -1,3 +1,6 @@
+; shift move
+; min,max
+
 {
 	#SingleInstance, Force
 	#Persistent
@@ -37,6 +40,22 @@
 	Log.Write("ProcessMatchArray Length: " ProcessMatchArray.Count())
 }
 
+class ImageButton {
+	name := ""
+	hover := false
+	path := ""
+	ctlName := ""
+	__New(name,cn,fileName) {
+		this.name := name
+		this.ctlName := cn
+		this.path := "assets/" fileName
+	}
+}
+editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
+remove := new ImageButton("btnRemove", "Static3", "remove.png")
+addNew := new ImageButton("btnAddNew", "Static4", "new-alt.png")
+imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
+
 { ; main gui
 	defaultWidth := 1000
 	Gui, _Main_:Default
@@ -44,14 +63,17 @@
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
-	Gui, Add, Text, Section w940, Winperio
+	Gui, Add, Text, Section w875, Winperio
 	Gui, Font, s9, Segoe UI
-	Gui, Add, Button, w50 ym gShowAddNew vbtnAddNew, Add
+	; Gui, Add, Button, w50 ym gShowAddNew vbtnAddNew, Add
+	Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
+	Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
+	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Identify By|Title|Class|Process|X|Y|W|H
 	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " currentActiveProfile
-	Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
-	Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
-	Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
+	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
+	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
+	; Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
 	populateListView()
 }
 
@@ -63,36 +85,59 @@
 	Gui, Font, s15, Segoe UI
 	Gui, Add, Text, vEditTitleLabel w400
 	
-	Gui, Font, s9, Segoe UI
+	Gui, Font, s12, Segoe UI
+	Gui, Add, Text,, % "Active Window"
+	; Gui, Add, Button, Section xm gSelectAWindow vbtnSelectWin, Select a Window
+	Gui, Font, s10, Segoe UI
+	cbxW := 75
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveTitle, Title
+	Gui, Add, Text, ys w700 cgray vactiveTitle 
+
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveClass, Class
+	Gui, Add, Text, ys w700 cgray vactiveClass
+
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveProcess, Process
+	Gui, Add, Text, ys w700 cgray vactiveProcess
+
+	Gui, Add, Text, Section xm, % "Match Pattern (RegEx)"
+	Gui, Add, Checkbox, ys Checked vcbxEscapeRegex, % "Escape RegEx"
+	Gui, Font, s10, Consolas
+	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
+	Gui, Font, s10, Segoe UI
+	; Gui, Add, Radio, Section vEditRadMoveID, Window:
+	; Gui, Add, Radio, yp+35, Class:
+	; Gui, Add, Radio, yp+35, Process:
+	; Gui, Add, Radio, yp+35 Disabled, RegEx:
+	; Gui, Add, Edit, ys w300 vEditdispWin
+	; Gui, Add, Edit, wp vEditdispClass
+	; Gui, Add, Edit, wp vEditdispProc
+	; Gui, Add, Edit, wp vEditDispRegEx Disabled
 	
-	Gui, Add, Button, Section xm gSelectAWindow vbtnSelectWin, Select a Window
+	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId Hidden
 	
-	Gui, Add, Radio, Section vEditRadMoveID, Window:
-	Gui, Add, Radio, yp+35, Class:
-	Gui, Add, Radio, yp+35, Process:
-	Gui, Add, Radio, yp+35 Disabled, RegEx:
-	Gui, Add, Edit, ys w300 vEditdispWin
-	Gui, Add, Edit, wp vEditdispClass
-	Gui, Add, Edit, wp vEditdispProc
-	Gui, Add, Edit, wp vEditDispRegEx Disabled
+	Gui, Font, s12, Segoe UI
+	Gui, Add, Text, xm, % "Coordinates"
+	Gui, Font, s10, Segoe UI
 	
-	Gui, Add, Edit, xm w200 vtxtCurrentSeqId
-	
-	Gui, Add, Text, Section xm w70, X:
-	Gui, Add, Edit, ys w90 gEditWinXCoordChanged
+	Gui, Add, Text, Section xm w20, X:
+	Gui, Add, Edit, ys-4 w90 gEditWinXCoordChanged
 	Gui, Add, UpDown, vEditdispX gEditWinXCoordChanged 0x80 Range-2147483648-2147483647
 	
-	Gui, Add, Text, Section xm w70, Y:
-	Gui, Add, Edit, ys w90 gEditWinYCoordChanged
+	Gui, Add, Text, Section xm w20, Y:
+	Gui, Add, Edit, ys-4 w90 gEditWinYCoordChanged
 	Gui, Add, UpDown, vEditdispY gEditWinYCoordChanged 0x80 Range-2147483648-2147483647
 	
-	Gui, Add, Text, Section xm w70, W:
-	Gui, Add, Edit, ys w90 gEditWinWCoordChanged
+	Gui, Add, Text, Section xm w20, W:
+	Gui, Add, Edit, ys-4 w90 gEditWinWCoordChanged
 	Gui, Add, UpDown, vEditdispW gEditWinWCoordChanged 0x80 Range-2147483648-2147483647
 	
-	Gui, Add, Text, Section xm w70, H:
-	Gui, Add, Edit, ys w90 gEditWinHCoordChanged
+	Gui, Add, Text, Section xm w20, H:
+	Gui, Add, Edit, ys-4 w90 gEditWinHCoordChanged
 	Gui, Add, UpDown, vEditdispH gEditWinHCoordChanged 0x80 Range-2147483648-2147483647
+
+	Gui, Font, s12, Segoe UI
+	Gui, Add, Text, xm, % "Options"
+	Gui, Font, s10, Segoe UI
 
 	Gui, Add, Checkbox, Section xm vcbxAlwaysOnTop, Always on top
 	
@@ -142,7 +187,11 @@
 
 ;~ if (trayTipCount < 3)
 Gui, Show, AutoSize Center, Winperio
+WinGet, winperioHwnd, ID, Winperio
 SetTimer, GetActiveWin, 1000
+SetTimer, WatchWin, 1000
+SetTimer, WatchWin, Off
+SetTimer, GetMouse, 100
 ;~ SetTimer, CheckVersion, 100
 ;~ gosub, DataFetch
 return ; end of auto-execution section
@@ -323,6 +372,7 @@ ShowAddNew:
 	Gui, Show, AutoSize Center, Winperio
 	selectMode := 1
 	SetTimer, GetActiveWin, Off
+	SetTimer, WatchWin, On
 	return
 }
 
@@ -415,7 +465,7 @@ SelectAWindow:
 	GuiControl, Show, btnCancelSelect
 	GuiControl, Enable, btnSaveCoords
 	SetTimer, GetActiveWin, Off
-	SetTimer, WatchWin, 100
+	SetTimer, WatchWin, On
 	return
 }
 
@@ -561,21 +611,37 @@ DeleteProfile:
 WatchWin:
 {
 	Gui, _Edit_:Default
+	Gui, Submit, NoHide
 	WinGetTitle, watchingWindow, A
-	if (watchingWindow != "Winperio") {
-		;~ MsgBox, 4096,,  % watchingWindow
-		targetWindow := watchingWindow
-		WinGet, winProc, ProcessName, %watchingWindow%
-		WinGetClass, winClass, %watchingWindow%
-		WinGetPos, winX, winY, winW, winH, %watchingWindow%
-		GuiControl,, EditdispWin, % watchingWindow
-		GuiControl,, EditdispClass, % winClass
-		GuiControl,, EditdispProc, % winProc
-		GuiControl,, EditdispX, % winX
-		GuiControl,, EditdispY, % winY
-		GuiControl,, EditdispW, % winW
-		GuiControl,, EditdispH, % winH
+	WinGet, winProc, ProcessName, %watchingWindow%
+	WinGetClass, winClass, %watchingWindow%
+	WinGetPos, winX, winY, winW, winH, %watchingWindow%
+	; regExEsc(watchingWindow " ahk_class " winClass " ahk_exe " winProc)
+	t := ""
+	Log.Write("cbxActiveTitle: " cbxActiveTitle)
+	if (cbxActiveTitle) {
+		t .= watchingWindow
 	}
+	if (cbxActiveClass) {
+		t .= " ahk_class " winClass
+	}
+	if (cbxActiveProcess) {
+		t .= " ahk_exe " winProc
+	}
+	t := Trim(t)
+	if (cbxEscapeRegex) {
+		t := regExEsc(t)
+	}
+	Log.Write("t: " t)
+	GuiControl,, currentWindowFullTitle, % t
+	GuiControl,, activeTitle, % watchingWindow
+	GuiControl,, activeClass, % winClass
+	GuiControl,, activeProcess, % winProc
+	
+	GuiControl,, EditdispX, % winX
+	GuiControl,, EditdispY, % winY
+	GuiControl,, EditdispW, % winW
+	GuiControl,, EditdispH, % winH
 	return
 }
 
@@ -647,7 +713,7 @@ GetActiveWin:
 	; WinGetClass, thisActiveClass, A
 	; WinGet, thisActiveProcess, ProcessName, A
 	; WinGet, id, id, A
-
+  wasShift:=GetKeyState("LShift", "P")
 	WinGet, allWins, List
 	Loop, % allWins
 	{
@@ -655,32 +721,55 @@ GetActiveWin:
 		WinGet, p, ProcessName, % "ahk_id " id
 		WinGetTitle, t, % "ahk_id " id
 		WinGetClass, c, % "ahk_id " id
-		; fullyMatchableName := t " ahk_class " c " ahk_exe" p
+		; if (t != "Calculator") {
+		; 	Log.Write("id: " id)
+		; 	Log.Write("not calc: " t)
+		; 	continue
+		; }
+		fullyMatchableName := t " ahk_class " c " ahk_exe " p
 		
-		for k, v in ProfileTitleMatchArray { 
-			Log.Write("t: " t " ||| v.Title: " v.Title)
-			if (t = v.Title) {
-				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+		for k, v in WinArray { 
+			; Log.Write("t: " t " ||| v.Title: " v.Title)
+			; Log.Write("fullyMatchableName: " fullyMatchableName)
+			; Log.Write("title: " v.Title)
+			r := RegExMatch(fullyMatchableName, "i)" v.Title)
+
+			if (r > 0) {
+				if (wasShift && WinActive("ahk_id " id)) {
+					Log.Write("Moving to new coords!")
+				} else {
+					Log.Write("[" r "] matched: " v.Title " with " fullyMatchableName)
+					WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+					WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+				}
 			}
 		}
-		for k, v in ProfileClassMatchArray {
-			Log.Write("c: " c " ||| v.Class: " v.Class)
-			; regex match
-			if (c = v.Class) {
-				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
-			}
-		}
-		for k, v in ProfileProcessMatchArray {
-			Log.Write("p: " p "||| v.Process: " v.Process)
-			WinGetTitle, tt, % "ahk_id " id
-			WinGetActiveTitle, t
-			if (p = v.Process) {
-				WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-				WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
-			}
-		}
+
+		; for k, v in ProfileTitleMatchArray { 
+		; 	Log.Write("t: " t " ||| v.Title: " v.Title)
+		; 	if (t = v.Title) {
+		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+		; 	}
+		; }
+
+		; for k, v in ProfileClassMatchArray {
+		; 	Log.Write("c: " c " ||| v.Class: " v.Class)
+		; 	; regex match
+		; 	if (c = v.Class) {
+		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+		; 	}
+		; }
+		; for k, v in ProfileProcessMatchArray {
+		; 	Log.Write("p: " p "||| v.Process: " v.Process)
+		; 	WinGetTitle, tt, % "ahk_id " id
+		; 	WinGetActiveTitle, t
+		; 	if (p = v.Process) {
+		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+		; 	}
+		; }
 	}
 	return
 	; for k, v in ProfileTitleMatchArray {
@@ -849,6 +938,8 @@ _Edit_GuiSize:
 {
 	Gui, _Edit_:Default
 	Gui, +LastFound
+	autoxywh("currentWindowFullTitle", "w")
+	autoxywh("activeTitle", "w")
 	autoxywh("EditdispWin", "w")
 	autoxywh("EditdispClass", "w")
 	autoxywh("EditdispProc", "w")
@@ -866,8 +957,8 @@ _Main_GuiSize:
 	autoxywh("grpBx1","wh")
 	autoxywh("btnAddNew", "x")
 	autoxywh("ListSelection","wh")
-	autoxywh("btnRemove","y")
-	autoxywh("btnEdit","y")
+	autoxywh("btnRemove","x")
+	autoxywh("btnEdit","x")
 	autoxywh("btnSetWindows", "y")
 	autoxywh("btnSelectWin","y")
 	autoxywh("btnSaveCoords","y")
@@ -875,8 +966,6 @@ _Main_GuiSize:
 	return
 }
 
-Esc::
-	ExitApp
 _Main_GuiClose:
 {
 	Gui, _Main_:Default
@@ -1048,6 +1137,17 @@ populateCloneDropdown() {
 	GuiControl, _Edit_:, ddlCloneCoordinates, % lst
 	GuiControl, Choose, ddlCloneCoordinates, Clone another window's position
 }
+regExEsc(txt) {
+	txt := RegExReplace(txt, "i)\.", "\.")
+	txt := RegExReplace(txt, "i)\|", "\|")
+	txt := RegExReplace(txt, "i)\*", "\*")
+	txt := RegExReplace(txt, "i)\?", "\?")
+	txt := RegExReplace(txt, "i)\[", "\[")
+	txt := RegExReplace(txt, "i)\]", "\]")
+	txt := RegExReplace(txt, "i)\(", "\(")
+	txt := RegExReplace(txt, "i)\)", "\)")
+	return txt
+}
 selectActiveProfile(item) {
 	global config
 	Gui, _Main_:Default
@@ -1070,4 +1170,22 @@ CheckVersion:
 		Reload
 	}
 	return
+}
+GetMouse:
+{
+	MouseGetPos, x, y, w, cid, 1
+	if (w = winperioHwnd) {
+		for k, v in imgButtons
+			setHover(cid,v)
+	}
+	return
+}
+setHover(cid,h) {
+	if (cid = h.ctlName and h.hover == false) {
+			GuiControl,_Main_:, % h.name, % "*w32 *h32 " h.path
+			h.hover := true
+		} else if (cid != h.ctlName and h.hover == true) {
+			GuiControl,_Main_:, % h.name, % "*w30 *h30 " h.path
+			h.hover := false
+		}
 }
