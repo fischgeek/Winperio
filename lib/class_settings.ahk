@@ -9,6 +9,7 @@ class Settings {
   TrayTipCount := 0
 
   Init() {
+    this.FileInstalls()
     IfNotExist, % Settings.ConfigPath
       FileCreateDir, % Settings.ConfigPath
     IfNotExist, % Settings.ConfigFile
@@ -18,7 +19,9 @@ class Settings {
       IniWrite, % "Default", % Settings.ConfigFile, Settings, ActiveProfile
       IniWrite, 0, % Settings.ConfigFile, Settings, TrayTipCount
     }
-    Try
-		  Menu, tray, Icon, % Settings.TrayIconFile
+    Menu, tray, Icon, % Settings.TrayIcon
+  }
+  FileInstalls() {
+    FileInstall, assets\winperio.ico, % A_AppData "Winperio\winperio.ico", 1
   }
 }

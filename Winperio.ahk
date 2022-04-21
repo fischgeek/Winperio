@@ -7,11 +7,12 @@
 #Include lib\class_window.ahk
 #Include lib\class_imagebutton.ahk
 #Include lib\class_settings.ahk
+
 SetBatchLines, -1
 SetTitleMatchMode, 2
 fileVersion = 3.0.8
+Settings.Init()
 config := Settings.ConfigFile
-MsgBox, % config
 SysGet, monCount, MonitorCount
 IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
 IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
