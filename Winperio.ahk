@@ -1,56 +1,24 @@
 ; min,max
 
-{
-	#SingleInstance, Force
-	#Persistent
-	#Include lib\class_log.ahk
-	#Include lib\class_utils.ahk
-	#Include lib\class_window.ahk
-	SetBatchLines, -1
-	SetTitleMatchMode, 2
-	fileVersion = 3.0.8
-	cPath := A_AppData "\Winperio"
-	config := cPath "\winperio.ini"
-	host := "http://fischgeek.com/winperio"
-	;~ gosub, CheckForUpdates
-	IfNotExist, %cPath%
-		FileCreateDir, %cPath%
-	IfNotExist, %config%
-	{
-		IniWrite, 0, %config%, Settings, ProfileSync
-	}
-	;~ IfNotExist, %cPath%\winperio.ico
-		;~ URLDownloadToFile, % host "/assets/winperio.ico", %cPath%\winperio.ico
-	;~ IfNotExist, %cPath%\winperiop.ico
-		;~ URLDownloadToFile, % host "/assets/winperiop.ico", %cPath%\winperiop.ico
-	Try
-		Menu, tray, Icon, %cPath%\winperio.ico
-	SysGet, monCount, MonitorCount
-	IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
-	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
-	WinArray := getSavedWindows()
-	ProfileWinArray := getProfileWinArray(currentActiveProfile)
-	ProfileTitleMatchArray := getMatchArray(1, currentActiveProfile)
-	ProfileClassMatchArray := getMatchArray(2, currentActiveProfile)
-	ProfileProcessMatchArray := getMatchArray(3, currentActiveProfile)
-	Log.Write("WinArray Length: " WinArray.Count())
-	Log.Write("ProfileWinArray Length: " ProfileWinArray.Count())
-	Log.Write("TitleMatchArray Length: " TitleMatchArray.Count())
-	Log.Write("ClassMatchArray Length: " ClassMatchArray.Count())
-	Log.Write("ProcessMatchArray Length: " ProcessMatchArray.Count())
-}
+#SingleInstance, Force
+#Persistent
+#Include lib\class_log.ahk
+#Include lib\class_utils.ahk
+#Include lib\class_window.ahk
+#Include lib\class_imagebutton.ahk
+#Include lib\class_settings.ahk
+SetBatchLines, -1
+SetTitleMatchMode, 2
+fileVersion = 3.0.8
+config := Settings.ConfigFile
+MsgBox, % config
+SysGet, monCount, MonitorCount
+IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
+IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
+WinArray := getSavedWindows()
+ProfileWinArray := getProfileWinArray(currentActiveProfile)
 
-class ImageButton {
-	name := ""
-	hover := false
-	path := ""
-	ctlName := ""
-	__New(name,cn,fileName) {
-		this.name := name
-		this.ctlName := cn
-		this.path := "assets/" fileName
-	}
-}
+
 editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
 remove := new ImageButton("btnRemove", "Static3", "remove.png")
 addNew := new ImageButton("btnAddNew", "Static4", "new-alt.png")
@@ -624,6 +592,17 @@ SaveCoords:
 	return
 }
 
+saveNewCoords(win) {
+	global
+	sequence := win.SequenceID
+	IniWrite, % win.XCoord, %config%, % sequence, X
+	IniWrite, % win.YCoord, %config%, % sequence, Y
+	IniWrite, % win.Width, %config%, % sequence, W
+	IniWrite, % win.Height, %config%, % sequence, H
+	IniRead, profile, %config%, Settings, ActiveProfile, % ""
+	populateGlobalArrays(profile)
+	populateListView()
+}
 ; timers
 GetActiveWin:
 {
@@ -635,6 +614,7 @@ GetActiveWin:
 		WinGet, p, ProcessName, % "ahk_id " id
 		WinGetTitle, t, % "ahk_id " id
 		WinGetClass, c, % "ahk_id " id
+		WinGetPos, curX, curY, curW, curH, % "ahk_id " id
 		fullyMatchableName := t " ahk_class " c " ahk_exe " p
 		
 		for k, v in ProfileWinArray { 
@@ -642,7 +622,12 @@ GetActiveWin:
 
 			if (r > 0) {
 				if (wasShift && WinActive("ahk_id " id)) {
-					; Log.Write("Moving to new coords!")
+					v.XCoord := curX
+					v.YCoord := curY
+					v.Width := curW
+					v.Height := curH
+					saveNewCoords(v)
+					Log.Write("x: " curX " y: " curY)
 				} else {
 					; Log.Write("[" A_Index "] matched: " v.Pattern " with " fullyMatchableName)
 					WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
