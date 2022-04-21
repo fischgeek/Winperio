@@ -1,6 +1,8 @@
 class Window {
 	SequenceID:=
+	Name:=
 	Profile:=
+	Pattern:=
 	Title:=
 	Class:=
 	Process:=
@@ -11,9 +13,11 @@ class Window {
 	MoveID:=
 	AlwaysOnTop:=
 	
-	__New(s, pro, t, c, p, x, y, w, h, m, aot) {
+	__New(s, pro, name, pat, t, c, p, x, y, w, h, m, aot) {
 		this.SequenceID := s
 		this.Profile := pro
+		this.Name := name
+		this.Pattern := pat
 		this.Title := t
 		this.Class := c
 		this.Process := p

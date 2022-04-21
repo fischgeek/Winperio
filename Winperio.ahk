@@ -1,4 +1,3 @@
-; shift move
 ; min,max
 
 {
@@ -7,6 +6,7 @@
 	#Include lib\class_log.ahk
 	#Include lib\class_utils.ahk
 	#Include lib\class_window.ahk
+	SetBatchLines, -1
 	SetTitleMatchMode, 2
 	fileVersion = 3.0.8
 	cPath := A_AppData "\Winperio"
@@ -69,7 +69,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
 	Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
-	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Identify By|Title|Class|Process|X|Y|W|H
+	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Pattern|X|Y|W|H
 	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " currentActiveProfile
 	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
@@ -84,14 +84,13 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
 	Gui, Add, Text, vEditTitleLabel w400
-	
+
 	Gui, Font, s12, Segoe UI
 	Gui, Add, Text,, % "Active Window"
-	; Gui, Add, Button, Section xm gSelectAWindow vbtnSelectWin, Select a Window
 	Gui, Font, s10, Segoe UI
 	cbxW := 75
 	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveTitle, Title
-	Gui, Add, Text, ys w700 cgray vactiveTitle 
+	Gui, Add, Text, ys w700 cgray vactiveTitle
 
 	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveClass, Class
 	Gui, Add, Text, ys w700 cgray vactiveClass
@@ -104,14 +103,6 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Font, s10, Consolas
 	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
 	Gui, Font, s10, Segoe UI
-	; Gui, Add, Radio, Section vEditRadMoveID, Window:
-	; Gui, Add, Radio, yp+35, Class:
-	; Gui, Add, Radio, yp+35, Process:
-	; Gui, Add, Radio, yp+35 Disabled, RegEx:
-	; Gui, Add, Edit, ys w300 vEditdispWin
-	; Gui, Add, Edit, wp vEditdispClass
-	; Gui, Add, Edit, wp vEditdispProc
-	; Gui, Add, Edit, wp vEditDispRegEx Disabled
 	
 	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId Hidden
 	
@@ -197,13 +188,11 @@ SetTimer, GetMouse, 100
 return ; end of auto-execution section
 
 ; file-menu
-
 FileReload:
 {
 	Reload
 	return
 }
-
 FileRunOnStartup:
 {
 	if (startToggle = "on")
@@ -222,28 +211,24 @@ FileRunOnStartup:
 	}
 	return
 }
-
 FileExit:
 {
 	ExitApp
 }
 
 ; profile-menu
-
 ProfileMenuItems:
 {
 	Gui, _Main_:Default
 	selectActiveProfile(A_ThisMenuItem)
 	return
 }
-
 ProfileMenuManage:
 {
 	Gui, _ManageProfiles_:Default
 	gosub, BuildProfilesGui
 	return
 }
-
 ProfileMenuSync:
 {
 	Gui, _Main_:Default
@@ -276,19 +261,16 @@ ProfileMenuSync:
 }
 
 ; help-menu
-
 HelpAbout:
 {
 	MsgBox, 64, Winperio, Version: %fileVersion%`nCreated by: FischGeek
 	return
 }
-
 HelpContact:
 {
 	Run, Mailto:fischgeek@gmail.com
 	return
 }
-
 HelpUninstall:
 {
 	MsgBox, 35, Winperio, Are you sure you want to uninstall Winperio?
@@ -301,34 +283,29 @@ HelpUninstall:
 }
 
 ; tray-context-menu
-
 MenuWinManage:
 {
 	Gui, _Main_:Default
 	Gui, Show, AutoSize Center, Winperio
 	return
 }
-
 MenuPause:
 {
 	Menu, Tray, ToggleCheck, Pause
 	Pause
 	return
 }
-
 MenuReload:
 {
 	Reload
 	return
 }
-
 MenuExit:
 {
 	ExitApp
 }
 
 ; main-ui
-
 SelectedItem:
 {
 	Gui, _Main_:Default
@@ -354,15 +331,14 @@ Remove:
 		GuiControl, Disable, btnRemove
 		GuiControl, Disable, btnEdit
 		IniDelete, %config%, % selectedEntry
-		populateGlobalArrays()
-		; lazy, I know, but just for now.
+		IniRead, profile, %config%, Settings, ActiveProfile, % ""
+		populateGlobalArrays(profile)
 		populateListView()
 	}
 	return
 }
 
 ; add-edit
-
 ShowAddNew:
 {
 	Gui, _Edit_:Default
@@ -375,7 +351,6 @@ ShowAddNew:
 	SetTimer, WatchWin, On
 	return
 }
-
 Edit:
 {
 	LV_GetText(EditSelectedRowText, selectedRow, 3)
@@ -405,25 +380,14 @@ Edit:
 	SetTimer, GetActiveWin, Off
 	return
 }
-
 EditSave:
 {
 	Gui, _Edit_:Default
 	Gui, Submit
 	selectMode := 0
-	;~ SetTimer, WatchWinEdit, Off
-
-	if (EditRadMoveID = 0)
-	{
-		MsgBox, 4144, Window Management, Please select a radio button for the MoveID. This will determine how the program will identify the window.
-		return
-	}
-	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, 0
-	IniWrite, % currentActiveProfile, %config%, % txtCurrentSeqId, Profile
-	IniWrite, % EditRadMoveID, %config%, % txtCurrentSeqId, MoveID
-	IniWrite, % EditDispWin, %config%, % txtCurrentSeqId, Title
-	IniWrite, % EditDispClass, %config%, % txtCurrentSeqId, Class 
-	IniWrite, % EditDispProc, %config%, % txtCurrentSeqId, Process
+	IniRead, profile, %config%, Settings, ActiveProfile, % ""
+	IniWrite, % profile, %config%, % txtCurrentSeqId, Profile
+	IniWrite, % currentWindowFullTitle, %config%, % txtCurrentSeqId, Pattern
 	IniWrite, % EditDispX, %config%, % txtCurrentSeqId, X 
 	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y 
 	IniWrite, % EditDispW, %config%, % txtCurrentSeqId, W
@@ -431,21 +395,11 @@ EditSave:
 	IniWrite, % cbxAlwaysOnTop, %config%, % txtCurrentSeqId, AlwaysOnTop
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
-	populateGlobalArrays()
-	; WinArray[txtCurrentSeqId].XCoord := EditDispWin
-	; WinArray[txtCurrentSeqId].XCoord := EditDispX
-	; WinArray[txtCurrentSeqId].YCoord := EditDispY
-	; WinArray[txtCurrentSeqId].Width := EditDispW
-	; WinArray[txtCurrentSeqId].Height := EditDispH
-	; WinArray[txtCurrentSeqId].Class := EditDispClass
-	; WinArray[txtCurrentSeqId].Process := EditDispProc
-	; WinArray[txtCurrentSeqId].MoveID := EditRadMoveID
+	populateGlobalArrays(profile)
 	SetTimer, GetActiveWin, On
-	; lazy, I know, but just for now.
 	populateListView()
 	return
 }
-
 _Edit_GuiClose:
 EditCancel:
 {
@@ -608,43 +562,6 @@ DeleteProfile:
 	return
 }
 
-WatchWin:
-{
-	Gui, _Edit_:Default
-	Gui, Submit, NoHide
-	WinGetTitle, watchingWindow, A
-	WinGet, winProc, ProcessName, %watchingWindow%
-	WinGetClass, winClass, %watchingWindow%
-	WinGetPos, winX, winY, winW, winH, %watchingWindow%
-	; regExEsc(watchingWindow " ahk_class " winClass " ahk_exe " winProc)
-	t := ""
-	Log.Write("cbxActiveTitle: " cbxActiveTitle)
-	if (cbxActiveTitle) {
-		t .= watchingWindow
-	}
-	if (cbxActiveClass) {
-		t .= " ahk_class " winClass
-	}
-	if (cbxActiveProcess) {
-		t .= " ahk_exe " winProc
-	}
-	t := Trim(t)
-	if (cbxEscapeRegex) {
-		t := regExEsc(t)
-	}
-	Log.Write("t: " t)
-	GuiControl,, currentWindowFullTitle, % t
-	GuiControl,, activeTitle, % watchingWindow
-	GuiControl,, activeClass, % winClass
-	GuiControl,, activeProcess, % winProc
-	
-	GuiControl,, EditdispX, % winX
-	GuiControl,, EditdispY, % winY
-	GuiControl,, EditdispW, % winW
-	GuiControl,, EditdispH, % winH
-	return
-}
-
 SaveCoords:
 {
 	Gui, _Main_:Default
@@ -707,13 +624,10 @@ SaveCoords:
 	return
 }
 
+; timers
 GetActiveWin:
 {
-	; WinGetActiveTitle, thisActiveTitle
-	; WinGetClass, thisActiveClass, A
-	; WinGet, thisActiveProcess, ProcessName, A
-	; WinGet, id, id, A
-  wasShift:=GetKeyState("LShift", "P")
+  wasShift := GetKeyState("LShift", "P")
 	WinGet, allWins, List
 	Loop, % allWins
 	{
@@ -721,97 +635,63 @@ GetActiveWin:
 		WinGet, p, ProcessName, % "ahk_id " id
 		WinGetTitle, t, % "ahk_id " id
 		WinGetClass, c, % "ahk_id " id
-		; if (t != "Calculator") {
-		; 	Log.Write("id: " id)
-		; 	Log.Write("not calc: " t)
-		; 	continue
-		; }
 		fullyMatchableName := t " ahk_class " c " ahk_exe " p
 		
-		for k, v in WinArray { 
-			; Log.Write("t: " t " ||| v.Title: " v.Title)
-			; Log.Write("fullyMatchableName: " fullyMatchableName)
-			; Log.Write("title: " v.Title)
-			r := RegExMatch(fullyMatchableName, "i)" v.Title)
+		for k, v in ProfileWinArray { 
+			r := RegExMatch(fullyMatchableName, "i)" v.Pattern)
 
 			if (r > 0) {
 				if (wasShift && WinActive("ahk_id " id)) {
-					Log.Write("Moving to new coords!")
+					; Log.Write("Moving to new coords!")
 				} else {
-					Log.Write("[" r "] matched: " v.Title " with " fullyMatchableName)
+					; Log.Write("[" A_Index "] matched: " v.Pattern " with " fullyMatchableName)
 					WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-					WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
+					; WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
 				}
 			}
 		}
-
-		; for k, v in ProfileTitleMatchArray { 
-		; 	Log.Write("t: " t " ||| v.Title: " v.Title)
-		; 	if (t = v.Title) {
-		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
-		; 	}
-		; }
-
-		; for k, v in ProfileClassMatchArray {
-		; 	Log.Write("c: " c " ||| v.Class: " v.Class)
-		; 	; regex match
-		; 	if (c = v.Class) {
-		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
-		; 	}
-		; }
-		; for k, v in ProfileProcessMatchArray {
-		; 	Log.Write("p: " p "||| v.Process: " v.Process)
-		; 	WinGetTitle, tt, % "ahk_id " id
-		; 	WinGetActiveTitle, t
-		; 	if (p = v.Process) {
-		; 		WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
-		; 		WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
-		; 	}
-		; }
 	}
 	return
-	; for k, v in ProfileTitleMatchArray {
-	; 	if (v.MatchMode = "Contains") {
-	; 		WinMove, 
-	; 		WinMove,,, v.XCoord, v.YCoord, v.Width, v.Height
-	; 	}
-	; 	; if (v.Title = thisActiveTitle) {
-	; 	; 	Log.Write("Moving " v.Title)
-	; 	; 	moveWin(thisActiveTitle, v)
-	; 	; }
-	; }
-	; for k, v in ProfileClassMatchArray {
-	; 	if (v.MatchMode = "Contains") {
-	; 		WinMove, ahk_id %id%
-	; 		WinMove,,, v.XCoord, v.YCoord, v.Width, v.Height
-	; 	}
-	; 	; if (v.Class = thisActiveClass) {
-	; 	; 	Log.Write("Moving " v.Title)
-	; 	; 	moveWin("ahk_class " thisActiveClass, v)
-	; 	; }
-	; }
-	; for k, v in ProfileProcessMatchArray {
-	; 	; if (v.Process = thisActiveProcess) {
-	; 	; 	Log.Write("Moving " v.Title)
-	; 	; 	moveWin("ahk_exe " thisActiveProcess, v)
-	; 	; }
-	; }
-	; for k, v in ProfileFullCusomMatchArray {
-	; 	; if (winactive(v.CustomString)) {
-	; 	; 	Log.Write("Moving " v.Title)
-	; 	; 	moveWin(id, v)
-	; 	; }
-	; }
-	; ;~ for k, v in ProfileRegExMatchArray {
-	; 	;~ if (v.Process == thisActiveProcess) {
-	; 		;~ Log.Write("Moving " v.Title)
-	; 		;~ moveWin("ahk_exe " thisActiveProcess, v)
-	; 	;~ }
-	; ;~ }
+}
+WatchWin:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	WinGetTitle, watchingWindow, A
+	WinGet, winProc, ProcessName, %watchingWindow%
+	WinGetClass, winClass, %watchingWindow%
+	WinGetPos, winX, winY, winW, winH, %watchingWindow%
+	; regExEsc(watchingWindow " ahk_class " winClass " ahk_exe " winProc)
+	if (watchingWindow != "Winperio") {
+		t := ""
+		Log.Write("cbxActiveTitle: " cbxActiveTitle)
+		if (cbxActiveTitle) {
+			t .= watchingWindow
+		}
+		if (cbxActiveClass) {
+			t .= " ahk_class " winClass
+		}
+		if (cbxActiveProcess) {
+			t .= " ahk_exe " winProc
+		}
+		t := Trim(t)
+		if (cbxEscapeRegex) {
+			t := regExEsc(t)
+		}
+		Log.Write("t: " t)
+		GuiControl,, currentWindowFullTitle, % t
+		GuiControl,, activeTitle, % watchingWindow
+		GuiControl,, activeClass, % winClass
+		GuiControl,, activeProcess, % winProc
+		
+		GuiControl,, EditdispX, % winX
+		GuiControl,, EditdispY, % winY
+		GuiControl,, EditdispW, % winW
+		GuiControl,, EditdispH, % winH
+	}
 	return
 }
+
 
 DataFetch:
 {
@@ -934,6 +814,7 @@ CheckForUpdates:
 	return
 }
 
+ ; events
 _Edit_GuiSize:
 {
 	Gui, _Edit_:Default
@@ -949,7 +830,6 @@ _Edit_GuiSize:
 	autoxywh("ddlCloneCoordinates", "y")
 	return
 }
-
 _Main_GuiSize:
 {
 	Gui, _Main_:Default
@@ -965,7 +845,6 @@ _Main_GuiSize:
 	autoxywh("lblCurrentProfile", "y")
 	return
 }
-
 _Main_GuiClose:
 {
 	Gui, _Main_:Default
@@ -980,12 +859,6 @@ _Main_GuiClose:
 	return
 }
 
-adjustColumnWidths() {
-	global
-	Gui, _Main_:Default
-	Loop, % LV_GetCount("Column")
-		LV_ModifyCol(A_Index, "AutoHdr")
-}
 adjustWindow(sMode, win, x, y, w, h) {
 	if (sMode) {
 		;~ WinMove, %win%,, %x%, %y%, %w%, %h%
@@ -1048,11 +921,11 @@ getMatchArray(matchTypeId, currentActiveProfile) {
 	}
 	return x
 }
-getProfileWinArray(currentActiveProfile) {
+getProfileWinArray(profile) {
 	global WinArray
 	o := []
 	for k, v in WinArray {
-		if (v.Profile == currentActiveProfile) {
+		if (v.Profile == profile) {
 			o[v.SequenceID] := v
 		}
 	}
@@ -1065,69 +938,48 @@ getSavedWindows() {
 	Loop, Parse, sections, `n
 	{
 		seq := A_LoopField
-		if (seq == "Settings")
-			continue
-		IniRead, pro, %config%, %seq%, Profile
-		IniRead, t, %config%, 	%seq%, Title
-		IniRead, c, %config%, 	%seq%, Class
-		IniRead, p, %config%, 	%seq%, Process
-		IniRead, x, %config%, 	%seq%, X
-		IniRead, y, %config%, 	%seq%, Y
-		IniRead, w, %config%, 	%seq%, W
-		IniRead, h, %config%, 	%seq%, H
-		IniRead, m, %config%, 	%seq%, MoveID
-		IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
-		win := new Window(seq, pro, t, c, p, x, y, w, h, m, aot)
-		;~ Log.Write("Getting " win.Title)
-		wa[win.SequenceID] := win
+		if (seq != "Settings") {
+			IniRead, pro, %config%, %seq%, Profile, % ""
+			IniRead, name, %config%, %seq%, Name, % ""
+			IniRead, pat, %config%, %seq%, Pattern, % ""
+			IniRead, x, %config%, 	%seq%, X
+			IniRead, y, %config%, 	%seq%, Y
+			IniRead, w, %config%, 	%seq%, W
+			IniRead, h, %config%, 	%seq%, H
+			IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
+			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot)
+			wa[win.SequenceID] := win
+		}
 	}
 	return wa
 }
 moveWin(w, wo) {
 	WinMove, % w,, % wo.XCoord, % wo.YCoord, % wo.Width, % wo.Height
 }
-populateGlobalArrays() {
+populateGlobalArrays(profile) {
 	global
 	WinArray := getSavedWindows()
-	ProfileWinArray := getProfileWinArray(currentActiveProfile)
-	ProfileTitleMatchArray := getMatchArray(1, currentActiveProfile)
-	ProfileClassMatchArray := getMatchArray(2, currentActiveProfile)
-	ProfileProcessMatchArray := getMatchArray(3, currentActiveProfile)
+	ProfileWinArray := getProfileWinArray(profile)
 }
+
+; list view
 populateListView() {
 	global config, WinArray
-	Log.Write("Populate ListView start")
 	Gui, _Main_:Default
 	LV_Delete()
 	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile
-	Log.Write("currentActiveProfile: " currentActiveProfile)
-	Log.Write(WinArray.Length())
 	for k, v in WinArray 
-	{
-		;~ Log.Write("k: " k)
-		;~ Log.Write("v: " v.SequenceID)
 		if (v.Profile == currentActiveProfile)
-		{
-			thisMoveID := v.MoveID
-			thisDisplayWin := v.Title
-			thisDisplayClass := v.Class
-			thisDisplayProc := v.Process
-			thisMoveID_string := (thisMoveID = 1 ? "Title" : thisMoveID = 2 ? "Class" : thisMoveID = 3 ? "Process" : "ERROR")
-			LV_Add(""
-			, v.SequenceID
-			, thisMoveID_string
-			, thisDisplayWin
-			, thisDisplayClass
-			, thisDisplayProc
-			, v.XCoord
-			, v.YCoord
-			, v.Width
-			, v.Height)
-		}
-	}
+			LV_Add("", v.SequenceID, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
 	adjustColumnWidths()
-	Log.Write("Populate list view end")
 }
+adjustColumnWidths() {
+	global
+	Gui, _Main_:Default
+	Loop, % LV_GetCount("Column")
+		LV_ModifyCol(A_Index, "AutoHdr")
+}
+
 populateCloneDropdown() {
 	global WinArray
 	lst := "`nClone another window's position`n"
@@ -1149,7 +1001,7 @@ regExEsc(txt) {
 	return txt
 }
 selectActiveProfile(item) {
-	global config
+	global
 	Gui, _Main_:Default
 	IniRead, cp, %config%, Settings, Profiles, 0
 	if (!cp)
@@ -1160,6 +1012,8 @@ selectActiveProfile(item) {
 	Menu, ProfileMenu, Check, %item%
 	IniWrite, %item%, %config%, Settings, ActiveProfile
 	GuiControl,, lblCurrentProfile, % "Current Profile: " item
+	ProfileWinArray := getProfileWinArray(item)
+	populateListView()
 }
 CheckVersion:
 {
