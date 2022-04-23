@@ -6,6 +6,6 @@ class ImageButton {
 	__New(name,cn,fileName) {
 		this.name := name
 		this.ctlName := cn
-		this.path := "assets/" fileName
+		this.path := A_ScriptDir "\assets\" fileName
 	}
 }

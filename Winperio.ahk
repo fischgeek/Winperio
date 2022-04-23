@@ -1,4 +1,7 @@
 ; min,max
+; only regex escape if desired
+	; will need to change the matching logic in the timer
+; option to skip if maximized
 
 #SingleInstance, Force
 #Persistent
@@ -11,14 +14,11 @@
 SetBatchLines, -1
 SetTitleMatchMode, 2
 fileVersion = 3.0.8
-Settings.Init()
-config := Settings.ConfigFile
+sets := new Settings()
+config := sets.ConfigFile
 SysGet, monCount, MonitorCount
-IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
-IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, %A_Space%
 WinArray := getSavedWindows()
-ProfileWinArray := getProfileWinArray(currentActiveProfile)
-
+ProfileWinArray := getProfileWinArray(sets.ActiveProfile)
 
 editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
 remove := new ImageButton("btnRemove", "Static3", "remove.png")
@@ -39,7 +39,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Pattern|X|Y|W|H
-	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " currentActiveProfile
+	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " sets.ActiveProfile
 	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
 	; Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
@@ -122,8 +122,8 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Menu, ProfileMenu, Add, Manage Profiles, ProfileMenuManage
 	Menu, ProfileMenu, Add, % "Sync Profiles with number of Screens", ProfileMenuSync
 	Menu, ProfileMenu, Add
-	Loop, Parse, currentProfiles, CSV
-		Menu, ProfileMenu, Add, %A_LoopField%, ProfileMenuItems	
+	for k, v in sets.Profiles
+		Menu, ProfileMenu, Add, %v%, ProfileMenuItems	
 	Menu, HelpMenu, Add, About, HelpAbout
 	Menu, HelpMenu, Add, Contact Author, HelpContact
 	Menu, HelpMenu, Add
@@ -134,7 +134,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Menu, MenuBar
 	
 	Try
-		Menu, ProfileMenu, Check, %currentActiveProfile%
+		Menu, ProfileMenu, Check, % sets.ActiveProfile
 	
 	IniRead, sync, %config%, Settings, ProfileSync, 0
 	if (sync) {
@@ -201,31 +201,31 @@ ProfileMenuManage:
 ProfileMenuSync:
 {
 	Gui, _Main_:Default
-	IniRead, profileSync, %config%, Settings, ProfileSync, 0
-	if (profileSync) {
-		sync := 0
-		Menu, ProfileMenu, UnCheck, % "Sync Profiles with number of Screens"
-		IniWrite, 0, %config%, Settings, ProfileSync
-		StringReplace, currentProfiles, currentProfiles, % ",1Screen,2Screen,3Screen,4Screen"
-	} else {
-		sync := 1
-		Menu, ProfileMenu, Check, % "Sync Profiles with number of Screens"
-		IniWrite, 1, %config%, Settings, ProfileSync
-		if (currentProfiles == "") {
-			currentProfiles := "1Screen,2Screen,3Screen,4Screen"
-		} else {
-			StringReplace, currentProfiles, currentProfiles, % ",1Screen,2Screen,3Screen,4Screen",, All
-			currentProfiles := currentProfiles ",1Screen,2Screen,3Screen,4Screen"	
-		}
-		Loop, Parse, currentProfiles, CSV
-			Menu, ProfileMenu, Add, %A_LoopField%, ProfileMenuItems
-		IniWrite, % currentProfiles, %config%, Settings, Profiles
-		SysGet, monCount, MonitorCount
-		activeProfile := monCount "Screen"
-		IniWrite, % activeProfile, %config%, Settings, ActiveProfile
-		selectActiveProfile(activeProfile)
-		GuiControl,, lblCurrentProfile, % "Current Profile: " activeProfile
-	}
+	; IniRead, profileSync, %config%, Settings, ProfileSync, 0
+	; if (profileSync) {
+	; 	sync := 0
+	; 	Menu, ProfileMenu, UnCheck, % "Sync Profiles with number of Screens"
+	; 	IniWrite, 0, %config%, Settings, ProfileSync
+	; 	StringReplace, sets.Profiles, sets.Profiles, % ",1Screen,2Screen,3Screen,4Screen"
+	; } else {
+	; 	sync := 1
+	; 	Menu, ProfileMenu, Check, % "Sync Profiles with number of Screens"
+	; 	IniWrite, 1, %config%, Settings, ProfileSync
+	; 	if (sets.Profiles == "") {
+	; 		sets.Profiles := "1Screen,2Screen,3Screen,4Screen"
+	; 	} else {
+	; 		StringReplace, sets.Profiles, sets.Profiles, % ",1Screen,2Screen,3Screen,4Screen",, All
+	; 		sets.Profiles := sets.Profiles ",1Screen,2Screen,3Screen,4Screen"	
+	; 	}
+	; 	Loop, Parse, sets.Profiles, CSV
+	; 		Menu, ProfileMenu, Add, %A_LoopField%, ProfileMenuItems
+	; 	IniWrite, % sets.Profiles, %config%, Settings, Profiles
+	; 	SysGet, monCount, MonitorCount
+	; 	activeProfile := monCount "Screen"
+	; 	IniWrite, % activeProfile, %config%, Settings, ActiveProfile
+	; 	selectActiveProfile(activeProfile)
+	; 	GuiControl,, lblCurrentProfile, % "Current Profile: " activeProfile
+	; }
 	return
 }
 
@@ -499,11 +499,7 @@ AddProfile:
 	InputBox, newProfileName, Add a Profile, % "Enter a new profile name:"
 	if (ErrorLevel)
 		return
-	IniRead, existingProfiles, %config%, Settings, Profiles, 0
-	if (!existingProfiles)
-		IniWrite, %newProfileName%, %config%, Settings, Profiles
-	else
-		IniWrite, %existingProfiles%`,%newProfileName%, %config%, Settings, Profiles
+	sets.AddProfile(newProfileName)
 	Menu, ProfileMenu, Add, %newProfileName%, ProfileMenuItems
 	selectActiveProfile(newProfileName)
 	gosub, BuildProfilesGui
@@ -515,19 +511,11 @@ DeleteProfile:
 {
 	Gui, _ManageProfiles_:Default
 	Gui, Submit, NoHide
-	IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
-	Loop, Parse, currentProfiles, CSV
-	{
-		if (A_Index = radProfile)
-		{
-			StringReplace, newProfiles, currentProfiles, %A_LoopField%
-			newProfiles := cleanString(newProfiles)
-			IniWrite, %newProfiles%, %config%, Settings, Profiles
-			Menu, ProfileMenu, Delete, %A_LoopField%
-			gosub, BuildProfilesGui
-			break
-		}
-	}
+	pro := sets.Profiles[radProfile]
+	MsgBox, % "deleting profile " pro
+	sets.DeleteProfileNumber(radProfile)
+	Menu, ProfileMenu, Delete, % pro
+	gosub, BuildProfilesGui
 	return
 }
 
@@ -536,38 +524,16 @@ SaveCoords:
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
 	SetTimer, WatchWin, Off
-	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile, 0
-	if (!currentActiveProfile) {
+	if (!sets.ActiveProfile) {
 		MsgBox, 4144, Winperio 2.0, % "Please create a profile first before adding to Winperio.`n`nYou can create a profile by going to the Profiles menu and selecting ""Manage Profiles"""
 		return
 	}
-	if (RadMoveID = 0) {
-		MsgBox, 4144, Window Management, Please select a radio button for the MoveID. This will determine how the program will identify the window.
-		return
-	}
-	;~ else if (RadMoveID = 2)
-	;~ {
-		;~ MsgBox, 4164, Winperio 2.0, By selecting "Class" as the MoveID`, any other windows that have the same Class will affected.`n`nAre you sure you want to select "Class" as the MoveID?
-		;~ IfMsgBox, No
-			;~ return
-	;~ }
-	;~ else if (RadMoveID = 3)
-	;~ {
-		;~ MsgBox, 4164, Winperio 2.0, By selecting "Process" as the MoveID`, any other windows that have the same Process will affected.`n`nAre you sure you want to select "Process" as the MoveID?
-		;~ IfMsgBox, No
-		;~ return
-	;~ }
-	;~ IniRead, sequence, %config%, Settings, Sequence
-	;~ sequence++
 	sequence := new Guid().Small
-	;~ MsgBox, % sequence
-	;~ IniWrite, % sequence, %config%, Settings, Sequence
-	;~ IniWrite, % sequence, %config%, % sequence, SequenceID
 	if (sequence == "") {
 		MsgBox, No sequence!
 		ExitApp
 	}
-	IniWrite, % currentActiveProfile, %config%, % sequence, Profile
+	IniWrite, % sets.ActiveProfile, %config%, % sequence, Profile
 	IniWrite, % dispWin, %config%, % sequence, Title
 	IniWrite, % dispClass, %config%, % sequence, Class
 	IniWrite, % dispProc, %config%,  % sequence, Process
@@ -588,7 +554,7 @@ SaveCoords:
 	GuiControl, Disable, btnSaveCoords
 	GuiControl, Show, btnSelectWin
 	GuiControl, Hide, btnCancelSelect
-	WinArray[sequence] := new Window(sequence, currentActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID)
+	WinArray[sequence] := new Window(sequence, sets.ActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID)
 	selectMode := 0
 	return
 }
@@ -696,16 +662,14 @@ BuildProfilesGui:
 {
 	Gui, _ManageProfiles_:New
 	Gui, _ManageProfiles_:Default
-	IniRead, currentProfiles, %config%, Settings, Profiles, %A_Space%
 	Gui, Color, White
 	Gui, Font, s10, Segoe UI
 	Gui, Add, Text,, Profiles:
-	Loop, Parse, currentProfiles, CSV
-	{
+	for k, v in sets.Profiles {
 		if (A_Index = 1)
-			Gui, Add, Radio, vradProfile, %A_LoopField%
+			Gui, Add, Radio, vradProfile, % v
 		else
-			Gui, Add, Radio,, %A_LoopField%
+			Gui, Add, Radio,, % v
 	}
 	Gui, Add, Text, 0x10 w185
 	Gui, Add, Button, Section yp+15 gAddProfile, Add Profile
@@ -865,26 +829,6 @@ resetEditGui(cSeqId) {
 	GuiControl,, EditRadMoveID, 0
 	populateCloneDropdown()
 }
-cleanString(list) {
-	Loop, 
-	{
-		StringLeft, lChar, list, 1
-		if (lChar = ",")
-			StringTrimLeft, list, list, 1
-		else
-			break
-	}
-	Loop,
-	{
-		StringRight, rChar, list, 1
-		if (rChar = ",")
-			StringTrimRight, list, list, 1
-		else
-			break
-	}
-	StringReplace, list, list, `,`,, `,, All
-	return, list
-}
 findItemByTitle(t) {
 	global WinArray
 	for k, v in WinArray {
@@ -896,16 +840,6 @@ findItemByTitle(t) {
 }
 m(msg) {
 	MsgBox, 4096,, %msg%
-}
-getMatchArray(matchTypeId, currentActiveProfile) {
-	global WinArray
-	x := []
-	for k, v in WinArray {
-		if (v.Profile == currentActiveProfile and v.MoveID == matchTypeId) {
-			x[v.SequenceID] := v
-		}
-	}
-	return x
 }
 getProfileWinArray(profile) {
 	global WinArray
@@ -950,12 +884,11 @@ populateGlobalArrays(profile) {
 
 ; list view
 populateListView() {
-	global config, WinArray
+	global sets, config, WinArray
 	Gui, _Main_:Default
 	LV_Delete()
-	IniRead, currentActiveProfile, %config%, Settings, ActiveProfile
 	for k, v in WinArray 
-		if (v.Profile == currentActiveProfile)
+		if (v.Profile == sets.ActiveProfile)
 			LV_Add("", v.SequenceID, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
 	adjustColumnWidths()
 }
@@ -984,21 +917,21 @@ regExEsc(txt) {
 	txt := RegExReplace(txt, "i)\]", "\]")
 	txt := RegExReplace(txt, "i)\(", "\(")
 	txt := RegExReplace(txt, "i)\)", "\)")
+	txt := RegExReplace(txt, "i)\+", "\+")
+	txt := RegExReplace(txt, "i)\\", "\\")
 	return txt
 }
 selectActiveProfile(item) {
 	global
 	Gui, _Main_:Default
-	IniRead, cp, %config%, Settings, Profiles, 0
-	if (!cp)
-		return
-	Loop, Parse, cp, CSV
+	for k, v in sets.Profiles
 		try
-			Menu, ProfileMenu, Uncheck, %A_LoopField%
+			Menu, ProfileMenu, Uncheck, %v%
 	Menu, ProfileMenu, Check, %item%
 	IniWrite, %item%, %config%, Settings, ActiveProfile
-	GuiControl,, lblCurrentProfile, % "Current Profile: " item
-	ProfileWinArray := getProfileWinArray(item)
+	sets.SetActiveProfile(item)
+	GuiControl,, lblCurrentProfile, % "Current Profile: " sets.ActiveProfile
+	ProfileWinArray := getProfileWinArray(sets.ActiveProfile)
 	populateListView()
 }
 CheckVersion:
