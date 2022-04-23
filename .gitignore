@@ -1,5 +1,6 @@
 assets/winperio-old-icons
 assets/window.snagx
+archive/*
 *.metaproj
 *.stackdump
 paket-files/
