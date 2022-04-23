@@ -19,10 +19,9 @@ config := sets.ConfigFile
 SysGet, monCount, MonitorCount
 WinArray := getSavedWindows()
 ProfileWinArray := getProfileWinArray(sets.ActiveProfile)
-
-editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
-remove := new ImageButton("btnRemove", "Static3", "remove.png")
-addNew := new ImageButton("btnAddNew", "Static4", "new-alt.png")
+; editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
+remove := new ImageButton("btnRemove", "Static2", "remove.png")
+addNew := new ImageButton("btnAddNew", "Static3", "new-alt.png")
 imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 
 { ; main gui
@@ -32,10 +31,10 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
-	Gui, Add, Text, Section w875, Winperio
+	Gui, Add, Text, Section w900, Winperio
 	Gui, Font, s9, Segoe UI
 	; Gui, Add, Button, w50 ym gShowAddNew vbtnAddNew, Add
-	Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
+	; Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
 	Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Pattern|X|Y|W|H
@@ -73,7 +72,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
 	Gui, Font, s10, Segoe UI
 	
-	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId Hidden
+	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId
 	
 	Gui, Font, s12, Segoe UI
 	Gui, Add, Text, xm, % "Coordinates"
@@ -279,15 +278,15 @@ SelectedItem:
 {
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
-	if (A_GuiEvent != "Normal")
+	if (A_GuiEvent != "DoubleClick")
 		return
-	GuiControl, Enable, btnRemove
-	GuiControl, Enable, btnEdit
+	; GuiControl, Enable, btnRemove
+	; GuiControl, Enable, btnEdit
 	selectedRow := A_EventInfo
 	LV_ModifyCol(1, "Left")
+	Gosub, Edit
 	return
 }
-
 Remove:
 {
 	Gui, _Main_:Default
@@ -328,22 +327,15 @@ Edit:
 	Gui, _Edit_:Default
 	resetEditGui(w.SequenceID)
 	GuiControl,, EditTitleLabel, Edit
-	GuiControl,, EditDispWin, % w.Title
-	GuiControl,, EditDispClass, % w.Class
-	GuiControl,, EditDispProc, % w.Process
+	; GuiControl,, EditDispWin, % w.Title
+	; GuiControl,, EditDispClass, % w.Class
+	; GuiControl,, EditDispProc, % w.Process
+	GuiControl,, currentWindowFullTitle, % w.Pattern
 	GuiControl,, EditDispX, % w.XCoord
 	GuiControl,, EditDispY, % w.YCoord
 	GuiControl,, EditDispW, % w.Width
 	GuiControl,, EditDispH, % w.Height
-	if (w.MoveID = 1)
-		GuiControl,, EditRadMoveID, 1
-	else if (w.MoveID = 2)
-		GuiControl,, Class, 1
-	else if (w.MoveID = 3)
-		GuiControl,, Process, 1
-	IniRead, currentProfile, %config%, Settings, ActiveProfile
-	;~ existingEntries := ""
-	Gui, Show, AutoSize Center, Winperio 2.0 - Edit
+	Gui, Show, AutoSize Center, Winperio - Edit
 	selectMode := 1
 	;~ SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
@@ -365,6 +357,7 @@ EditSave:
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
 	populateGlobalArrays(profile)
+	SetTimer, WatchWin, Off
 	SetTimer, GetActiveWin, On
 	populateListView()
 	return
@@ -493,6 +486,7 @@ SetAll:
 	return
 }
 
+; profiles
 AddProfile:
 {
 	Gui, _ManageProfile_:Default
@@ -506,7 +500,6 @@ AddProfile:
 	Gui, Show
 	return
 }
-
 DeleteProfile:
 {
 	Gui, _ManageProfiles_:Default
@@ -518,6 +511,7 @@ DeleteProfile:
 	gosub, BuildProfilesGui
 	return
 }
+
 
 SaveCoords:
 {
