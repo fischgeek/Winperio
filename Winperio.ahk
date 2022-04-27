@@ -20,22 +20,22 @@ SysGet, monCount, MonitorCount
 WinArray := getSavedWindows()
 ProfileWinArray := getProfileWinArray(sets.ActiveProfile)
 ; editBtn := new ImageButton("btnEdit", "Static2", "edit.png")
-remove := new ImageButton("btnRemove", "Static2", "remove.png")
-addNew := new ImageButton("btnAddNew", "Static3", "new-alt.png")
+; remove := new ImageButton("btnRemove", "Static2", "remove.png")
+addNew := new ImageButton("btnAddNew", "Static2", "new.png")
 imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 
 { ; main gui
-	defaultWidth := 1000
+	defaultWidth := 900
 	Gui, _Main_:Default
 	Gui, +Resize ; +ToolWindow +Resize
 	Gui, Color, White
 	Gui, Margin, 10, 10
 	Gui, Font, s15, Segoe UI
-	Gui, Add, Text, Section w900, Winperio
+	Gui, Add, Text, Section w855, Winperio
 	Gui, Font, s9, Segoe UI
 	; Gui, Add, Button, w50 ym gShowAddNew vbtnAddNew, Add
 	; Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
-	Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
+	; Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
 	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Pattern|X|Y|W|H
 	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " sets.ActiveProfile
