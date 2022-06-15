@@ -1,4 +1,4 @@
-;@Ahk2Exe-SetFileVersion 3.0.15
+;@Ahk2Exe-SetFileVersion 3.0.16
 ;@Ahk2Exe-SetProductVersion 1
 ;@Ahk2Exe-SetName Winperio
 ;@Ahk2Exe-SetProductName Winperio
@@ -16,7 +16,7 @@
 #SingleInstance, Force
 #Persistent
 
-fileVersion = 3.0.15
+fileVersion = 3.0.16
 
 FileCreateDir, %A_ScriptDir%/assets
 FileInstall, assets/new.png, assets/new.png, 1
@@ -111,7 +111,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Text, xm, % "Options"
 	Gui, Font, s10, Segoe UI
 
-	Gui, Add, Checkbox, Section xm vcbxAlwaysOnTop, Always on top
+	Gui, Add, Checkbox, Section xm vcbxAlwaysOnTop Disabled, Always on top
 	
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
