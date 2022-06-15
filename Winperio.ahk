@@ -1,5 +1,8 @@
-;@Ahk2Exe-SetFileVersion 3.0.16
-;@Ahk2Exe-SetProductVersion 1
+#SingleInstance, Force
+#Persistent
+fileVersion = 3.0.17
+;@Ahk2Exe-SetFileVersion 3.0.17
+;@Ahk2Exe-SetProductVersion 3
 ;@Ahk2Exe-SetName Winperio
 ;@Ahk2Exe-SetProductName Winperio
 ;@Ahk2Exe-SetMainIcon assets\winperio.ico
@@ -12,11 +15,6 @@
 ; only regex escape if desired
 	; will need to change the matching logic in the timer
 ; option to skip if maximized
-
-#SingleInstance, Force
-#Persistent
-
-fileVersion = 3.0.16
 
 FileCreateDir, %A_ScriptDir%/assets
 FileInstall, assets/new.png, assets/new.png, 1
