@@ -21,6 +21,9 @@ class Settings {
     this.Profiles.RemoveAt(profileNumber)
     this.SaveProfiles()
   }
+  DeleteWindow(window) {
+    IniDelete, % this.ConfigFile, % window.SequenceID
+  }
   GetActiveProfile() {
     IniRead, p, % this.ConfigFile, Settings, ActiveProfile, %A_Space%
     return p

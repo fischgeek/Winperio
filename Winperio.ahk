@@ -1,3 +1,13 @@
+;@Ahk2Exe-SetFileVersion 3.0.14
+;@Ahk2Exe-SetProductVersion 1
+;@Ahk2Exe-SetName Winperio
+;@Ahk2Exe-SetProductName Winperio
+;@Ahk2Exe-SetMainIcon assets\winperio.ico
+;@Ahk2Exe-SetDescription Winperio
+;@Ahk2Exe-SetCompanyName DevTech FM
+;@Ahk2Exe-SetCopyright DevTech FM
+;@Ahk2Exe-UpdateManifest RequireAdmin 1
+; option to not show window on startup
 ; min,max
 ; only regex escape if desired
 	; will need to change the matching logic in the timer
@@ -5,6 +15,12 @@
 
 #SingleInstance, Force
 #Persistent
+
+fileVersion = 3.0.14
+
+FileCreateDir, %A_ScriptDir%/assets
+FileInstall, assets/new.png, assets/new.png, 1
+
 #Include lib\class_log.ahk
 #Include lib\class_utils.ahk
 #Include lib\class_window.ahk
@@ -13,7 +29,6 @@
 
 SetBatchLines, -1
 SetTitleMatchMode, 2
-fileVersion = 3.0.8
 sets := new Settings()
 config := sets.ConfigFile
 SysGet, monCount, MonitorCount
@@ -124,9 +139,8 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	for k, v in sets.Profiles
 		Menu, ProfileMenu, Add, %v%, ProfileMenuItems	
 	Menu, HelpMenu, Add, About, HelpAbout
-	Menu, HelpMenu, Add, Contact Author, HelpContact
-	Menu, HelpMenu, Add
-	Menu, HelpMenu, Add, Uninstall, HelpUninstall
+	; Menu, HelpMenu, Add
+	; Menu, HelpMenu, Add, Uninstall, HelpUninstall
 	Menu, MenuBar, Add, File, :FileMenu
 	Menu, MenuBar, Add, Profiles, :ProfileMenu
 	Menu, MenuBar, Add, Help, :HelpMenu
@@ -145,7 +159,12 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 }
 
 ;~ if (trayTipCount < 3)
-Gui, Show, AutoSize Center, Winperio
+isAdminFlag := ""
+if (A_IsAdmin) {
+	isAdminFlag := " [Adminstrator]"
+}
+mainWindowTitle := "Winperio" isAdminFlag
+Gui, Show, AutoSize Center, % mainWindowTitle
 WinGet, winperioHwnd, ID, Winperio
 SetTimer, GetActiveWin, 1000
 SetTimer, WatchWin, 1000
@@ -153,6 +172,10 @@ SetTimer, WatchWin, Off
 SetTimer, GetMouse, 100
 ;~ SetTimer, CheckVersion, 100
 ;~ gosub, DataFetch
+RegRead, isRunningOnStartup, HKCU, % "Software\Microsoft\Windows\CurrentVersion\Run", % "Winperio"
+if (isRunningOnStartup != "") {
+	Menu, FileMenu, Check, Run on startup
+}
 return ; end of auto-execution section
 
 ; file-menu
@@ -168,14 +191,16 @@ FileRunOnStartup:
 		startToggle := "off"
 		IniWrite, 0, %config%, Settings, RunOnStartup
 		Menu, FileMenu, UnCheck, Run on startup
-		FileDelete, %A_Startup%\Winperio.lnk
+		; FileDelete, %A_Startup%\Winperio.lnk
+		RegDelete, HKCU, % "Software\Microsoft\Windows\CurrentVersion\Run", % "Winperio"
 	}
 	else,
 	{	
 		startToggle := "on"
 		IniWrite, 1, %config%, Settings, RunOnStartup
 		Menu, FileMenu, Check, Run on startup
-		FileCreateShortcut, %A_ScriptDir%\Winperio.exe, %A_Startup%\Winperio.lnk, %A_ScriptDir%,,,,, 7
+		; FileCreateShortcut, %A_ScriptDir%\Winperio.exe, %A_Startup%\Winperio.lnk, %A_ScriptDir%,,,,, 7
+		RegWrite, REG_SZ, HKCU, % "Software\Microsoft\Windows\CurrentVersion\Run", % "Winperio", % A_ScriptFullPath
 	}
 	return
 }
@@ -231,12 +256,7 @@ ProfileMenuSync:
 ; help-menu
 HelpAbout:
 {
-	MsgBox, 64, Winperio, Version: %fileVersion%`nCreated by: FischGeek
-	return
-}
-HelpContact:
-{
-	Run, Mailto:fischgeek@gmail.com
+	MsgBox, 64, Winperio, Version: %fileVersion%
 	return
 }
 HelpUninstall:
@@ -287,24 +307,27 @@ SelectedItem:
 	Gosub, Edit
 	return
 }
-Remove:
+#IfWinActive, Winperio
+Delete::
 {
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
-	LV_GetText(selectedRowText, selectedRow, 3)
-	LV_GetText(selectedEntry, selectedRow, 1)
-	MsgBox, 4131, Window Management, Are you sure you want to delete the %selectedRowText% management?
-	IfMsgBox, Yes
-	{
-		GuiControl, Disable, btnRemove
-		GuiControl, Disable, btnEdit
-		IniDelete, %config%, % selectedEntry
-		IniRead, profile, %config%, Settings, ActiveProfile, % ""
-		populateGlobalArrays(profile)
-		populateListView()
+	ControlGetFocus, ctl, A
+	if (ctl == "SysListView321" and LV_GetCount("S") == 1) {
+		row := LV_GetNext(0, "F")
+		LV_GetText(itemId, row)
+		item := findItemById(itemId)
+		MsgBox, 4132, % "Winperio - Delete", % "Are you sure you want to delete the following entry?`n`n" item.Pattern 
+		IfMsgBox, Yes
+		{
+			sets.DeleteWindow(item)
+			populateGlobalArrays(profile)
+			populateListView()
+		}
 	}
 	return
 }
+#If
 
 ; add-edit
 ShowAddNew:
@@ -313,7 +336,7 @@ ShowAddNew:
 	newId := Utils.SmallGuid()
 	resetEditGui(newId)
 	GuiControl,, EditTitleLabel, Add
-	Gui, Show, AutoSize Center, Winperio
+	Gui, Show, AutoSize Center, Winperio - Add
 	selectMode := 1
 	SetTimer, GetActiveWin, Off
 	SetTimer, WatchWin, On
@@ -608,7 +631,8 @@ WatchWin:
 	WinGetClass, winClass, %watchingWindow%
 	WinGetPos, winX, winY, winW, winH, %watchingWindow%
 	; regExEsc(watchingWindow " ahk_class " winClass " ahk_exe " winProc)
-	if (watchingWindow != "Winperio") {
+	if (watchingWindow != "Winperio" and watchingWindow != "Winperio - Add") {
+		Log.Write("Active Window: " watchingWindow)
 		t := ""
 		Log.Write("cbxActiveTitle: " cbxActiveTitle)
 		if (cbxActiveTitle) {
@@ -822,6 +846,15 @@ resetEditGui(cSeqId) {
 	GuiControl,, EditRadMoveID, 1
 	GuiControl,, EditRadMoveID, 0
 	populateCloneDropdown()
+}
+findItemById(itemId) {
+	global WinArray
+	for k, v in WinArray {
+		if (v.SequenceID == itemId) {
+			return v
+		}
+	}
+	return 0
 }
 findItemByTitle(t) {
 	global WinArray
