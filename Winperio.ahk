@@ -1,4 +1,4 @@
-;@Ahk2Exe-SetFileVersion 3.0.14
+;@Ahk2Exe-SetFileVersion 3.0.15
 ;@Ahk2Exe-SetProductVersion 1
 ;@Ahk2Exe-SetName Winperio
 ;@Ahk2Exe-SetProductName Winperio
@@ -16,7 +16,7 @@
 #SingleInstance, Force
 #Persistent
 
-fileVersion = 3.0.14
+fileVersion = 3.0.15
 
 FileCreateDir, %A_ScriptDir%/assets
 FileInstall, assets/new.png, assets/new.png, 1
@@ -81,8 +81,6 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveProcess, Process
 	Gui, Add, Text, ys w700 cgray vactiveProcess
 
-	Gui, Add, Text, Section xm, % "Match Pattern (RegEx)"
-	Gui, Add, Checkbox, ys Checked vcbxEscapeRegex, % "Escape RegEx"
 	Gui, Font, s10, Consolas
 	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
 	Gui, Font, s10, Segoe UI
@@ -645,9 +643,9 @@ WatchWin:
 			t .= " ahk_exe " winProc
 		}
 		t := Trim(t)
-		if (cbxEscapeRegex) {
+		; if (cbxEscapeRegex) {
 			t := regExEsc(t)
-		}
+		; }
 		Log.Write("t: " t)
 		GuiControl,, currentWindowFullTitle, % t
 		GuiControl,, activeTitle, % watchingWindow
@@ -936,6 +934,7 @@ populateCloneDropdown() {
 	GuiControl, Choose, ddlCloneCoordinates, Clone another window's position
 }
 regExEsc(txt) {
+	txt := RegExReplace(txt, "i)\\", "\\")
 	txt := RegExReplace(txt, "i)\.", "\.")
 	txt := RegExReplace(txt, "i)\|", "\|")
 	txt := RegExReplace(txt, "i)\*", "\*")
@@ -945,7 +944,6 @@ regExEsc(txt) {
 	txt := RegExReplace(txt, "i)\(", "\(")
 	txt := RegExReplace(txt, "i)\)", "\)")
 	txt := RegExReplace(txt, "i)\+", "\+")
-	txt := RegExReplace(txt, "i)\\", "\\")
 	return txt
 }
 selectActiveProfile(item) {
