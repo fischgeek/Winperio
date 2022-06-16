@@ -50,7 +50,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	; Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
 	; Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
-	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Pattern|X|Y|W|H
+	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Name|Pattern|X|Y|W|H
 	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " sets.ActiveProfile
 	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
@@ -67,16 +67,23 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Text, vEditTitleLabel w400
 
 	Gui, Font, s12, Segoe UI
+	Gui, Add, Text,, % "Name"
+	Gui, Font, s8, Segoe UI
+	Gui, Add, Text, yp+25 cGray, optional
+	Gui, Font, s10, Segoe UI
+	Gui, Add, Edit, w350 vtxtOptionalName
+
+	Gui, Font, s12, Segoe UI
 	Gui, Add, Text,, % "Active Window"
 	Gui, Font, s10, Segoe UI
 	cbxW := 75
-	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveTitle, Title
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked gUseIdentifierCheckboxChanged vcbxActiveTitle, Title
 	Gui, Add, Text, ys w700 cgray vactiveTitle
 
-	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveClass, Class
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked gUseIdentifierCheckboxChanged vcbxActiveClass, Class
 	Gui, Add, Text, ys w700 cgray vactiveClass
 
-	Gui, Add, Checkbox, Section xm w%cbxW% Checked vcbxActiveProcess, Process
+	Gui, Add, Checkbox, Section xm w%cbxW% Checked gUseIdentifierCheckboxChanged vcbxActiveProcess, Process
 	Gui, Add, Text, ys w700 cgray vactiveProcess
 
 	Gui, Font, s10, Consolas
@@ -114,7 +121,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
-	Gui, Add, DDL, ys w250 Sort gCoordCloneDropdownItemChanged vddlCloneCoordinates
+	Gui, Add, DDL, ys w250 Sort gCoordCloneDropdownItemChanged vddlCloneCoordinates Disabled
 }
 
 { ; menus
@@ -349,6 +356,7 @@ Edit:
 	; GuiControl,, EditDispWin, % w.Title
 	; GuiControl,, EditDispClass, % w.Class
 	; GuiControl,, EditDispProc, % w.Process
+	GuiControl,, txtOptionalName, % w.Name
 	GuiControl,, currentWindowFullTitle, % w.Pattern
 	GuiControl,, EditDispX, % w.XCoord
 	GuiControl,, EditDispY, % w.YCoord
@@ -367,6 +375,7 @@ EditSave:
 	selectMode := 0
 	IniRead, profile, %config%, Settings, ActiveProfile, % ""
 	IniWrite, % profile, %config%, % txtCurrentSeqId, Profile
+	IniWrite, % txtOptionalName, %config%, % txtCurrentSeqId, Name
 	IniWrite, % currentWindowFullTitle, %config%, % txtCurrentSeqId, Pattern
 	IniWrite, % EditDispX, %config%, % txtCurrentSeqId, X 
 	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y 
@@ -479,6 +488,26 @@ CoordCloneDropdownItemChanged:
 	return
 }
 
+UseIdentifierCheckboxChanged:
+{
+	Gui, _Edit_:Default
+	Gui, Submit, NoHide
+	GuiControlGet, t,, activeTitle, Text
+	GuiControlGet, c,, activeClass, Text
+	GuiControlGet, e,, activeExe, Text
+	tempWin := t ; " ahk_class " c " ahk_exe " e
+	Log.Write("tempWin: " tempWin)
+	WinActivate, % tempWin
+
+	; if (cbxActiveTitle == 0) {
+	; 	GuiControlGet, thisTxt,, activeTitle
+	; 	Log.Write("activeTitle: " thisTxt)
+	; 	newTxt := RegExReplace(currentWindowFullTitle, "i)" regExEsc(thisTxt), "")
+	; 	Log.Write("Replaced: " newTxt)
+	; 	GuiControl,, currentWindowFullTitle, % newTxt
+	; }
+	return
+}
 
 
 SetAll:
@@ -583,6 +612,7 @@ saveNewCoords(win) {
 	populateGlobalArrays(profile)
 	populateListView()
 }
+
 ; timers
 GetActiveWin:
 {
@@ -832,9 +862,11 @@ resetEditGui(cSeqId) {
 	Gui, _Edit_:Default
 	GuiControl,, txtCurrentSeqId, % cSeqId
 	GuiControl,, EditTitleLabel
+	GuiControl,, txtOptionalName
 	GuiControl,, EditDispWin
 	GuiControl,, EditDispClass
 	GuiControl,, EditDispProc
+	GuiControl,, currentWindowFullTitle
 	GuiControl,, EditDispX
 	GuiControl,, EditDispY
 	GuiControl,, EditDispW
@@ -882,9 +914,9 @@ getSavedWindows() {
 	{
 		seq := A_LoopField
 		if (seq != "Settings") {
-			IniRead, pro, %config%, %seq%, Profile, % ""
-			IniRead, name, %config%, %seq%, Name, % ""
-			IniRead, pat, %config%, %seq%, Pattern, % ""
+			IniRead, pro, %config%, %seq%, Profile, % " "
+			IniRead, name, %config%, %seq%, Name, % " "
+			IniRead, pat, %config%, %seq%, Pattern, % " "
 			IniRead, x, %config%, 	%seq%, X
 			IniRead, y, %config%, 	%seq%, Y
 			IniRead, w, %config%, 	%seq%, W
@@ -912,7 +944,7 @@ populateListView() {
 	LV_Delete()
 	for k, v in WinArray 
 		if (v.Profile == sets.ActiveProfile)
-			LV_Add("", v.SequenceID, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
+			LV_Add("", v.SequenceID, v.Name, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
 	adjustColumnWidths()
 }
 adjustColumnWidths() {
