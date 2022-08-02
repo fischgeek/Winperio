@@ -19,11 +19,11 @@ fileVersion = 3.0.17
 FileCreateDir, %A_ScriptDir%/assets
 FileInstall, assets/new.png, assets/new.png, 1
 
-#Include lib\class_log.ahk
-#Include lib\class_utils.ahk
-#Include lib\class_window.ahk
-#Include lib\class_imagebutton.ahk
-#Include lib\class_settings.ahk
+#Include %a_ScriptDir%\lib\class_log.ahk
+#Include %a_ScriptDir%\lib\class_utils.ahk
+#Include %a_ScriptDir%\lib\class_window.ahk
+#Include %a_ScriptDir%\lib\class_imagebutton.ahk
+#Include %a_ScriptDir%\lib\class_settings.ahk
 
 SetBatchLines, -1
 SetTitleMatchMode, 2
