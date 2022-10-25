@@ -58,6 +58,12 @@ class Settings {
     ; TODO check if exists
     this.ActiveProfile := profile
   }
+  TogglePauseWindow(win) {
+    Log.Write("win.IsPaused Before" win.IsPaused)
+		win.IsPaused := !win.IsPaused
+    Log.Write("win.IsPaused After" win.IsPaused)
+		IniWrite, % win.IsPaused, % this.ConfigFile, % win.SequenceID, IsPaused
+	}
 
   ; internal
   cleanString(list) {

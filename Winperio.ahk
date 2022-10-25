@@ -36,8 +36,10 @@ ProfileWinArray := getProfileWinArray(sets.ActiveProfile)
 ; remove := new ImageButton("btnRemove", "Static2", "remove.png")
 addNew := new ImageButton("btnAddNew", "Static2", "new.png")
 imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
-
 { ; main gui
+	imgListId := IL_Create(4)
+	IL_Add(imgListId, "assets/play.ico")
+	IL_Add(imgListId, "assets/pause.ico")
 	defaultWidth := 900
 	Gui, _Main_:Default
 	Gui, +Resize ; +ToolWindow +Resize
@@ -55,6 +57,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
 	; Gui, Add, Button, ys gSetAll vbtnSetWindows, % "Set Windows"
+	LV_SetImageList(imgListId)
 	populateListView()
 }
 
@@ -159,6 +162,9 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 		selectActiveProfile(monCount "Screen")
 		SetTimer, CheckScreenCount, 1000
 	}
+
+	Menu, LVContextMenu, Add, Edit, ContextEdit
+	Menu, LVContextMenu, Add, Toggle Pause, ContextTogglePause
 }
 
 ;~ if (trayTipCount < 3)
@@ -273,6 +279,18 @@ HelpUninstall:
 	ExitApp
 }
 
+; listview-context-menu
+ContextEdit:
+{
+	Gosub, EditSelectedItem
+	return
+}
+ContextTogglePause:
+{
+	Gosub, TogglePause
+	return
+}
+
 ; tray-context-menu
 MenuWinManage:
 {
@@ -301,13 +319,18 @@ SelectedItem:
 {
 	Gui, _Main_:Default
 	Gui, Submit, NoHide
+	selectedRow := A_EventInfo
+	if (A_GuiEvent == "RightClick" and A_EventInfo > 0) {
+		MouseGetPos, mouseX, mouseY
+		Menu, LVContextMenu, Show, % mouseX, % mouseY
+	}
 	if (A_GuiEvent != "DoubleClick")
 		return
 	; GuiControl, Enable, btnRemove
 	; GuiControl, Enable, btnEdit
-	selectedRow := A_EventInfo
+	; selectedRow := A_EventInfo
 	LV_ModifyCol(1, "Left")
-	Gosub, Edit
+	Gosub, EditSelectedItem
 	return
 }
 #IfWinActive, Winperio
@@ -331,6 +354,19 @@ Delete::
 	return
 }
 #If
+TogglePause:
+{
+	Gui, _Main_:Default
+	Log.Write("selectedRow: " selectedRow)
+	LV_GetText(itemId, selectedRow, 1)
+	win := findItemById(itemId)
+	sets.TogglePauseWindow(win)
+	iconx := win.IsPaused == 0 ? "Icon1" : "Icon2"
+	Log.Write("iconx: " iconx)
+	LV_Modify(selectedRow, iconx)
+	populateGlobalArrays(profile)
+	return
+}
 
 ; add-edit
 ShowAddNew:
@@ -345,8 +381,9 @@ ShowAddNew:
 	SetTimer, WatchWin, On
 	return
 }
-Edit:
+EditSelectedItem:
 {
+	Gui, _Main_:Default
 	LV_GetText(EditSelectedRowText, selectedRow, 3)
 	LV_GetText(EditSelectedEntry, selectedRow, 1)
 	w := WinArray[EditSelectedEntry]
@@ -596,7 +633,7 @@ SaveCoords:
 	GuiControl, Disable, btnSaveCoords
 	GuiControl, Show, btnSelectWin
 	GuiControl, Hide, btnCancelSelect
-	WinArray[sequence] := new Window(sequence, sets.ActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID)
+	WinArray[sequence] := new Window(sequence, sets.ActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID, 0)
 	selectMode := 0
 	return
 }
@@ -630,7 +667,7 @@ GetActiveWin:
 		for k, v in ProfileWinArray { 
 			r := RegExMatch(fullyMatchableName, "i)" v.Pattern)
 
-			if (r > 0) {
+			if (r > 0 && !v.IsPaused) {
 				if (wasShift && WinActive("ahk_id " id)) {
 					v.XCoord := curX
 					v.YCoord := curY
@@ -922,7 +959,8 @@ getSavedWindows() {
 			IniRead, w, %config%, 	%seq%, W
 			IniRead, h, %config%, 	%seq%, H
 			IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
-			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot)
+			IniRead, isPaused, %config%, %seq%, IsPaused, 0
+			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot, isPaused)
 			wa[win.SequenceID] := win
 		}
 	}
@@ -943,8 +981,11 @@ populateListView() {
 	Gui, _Main_:Default
 	LV_Delete()
 	for k, v in WinArray 
+	{
+		iconx := v.IsPaused == 0 ? "Icon1" : "Icon2"
 		if (v.Profile == sets.ActiveProfile)
-			LV_Add("", v.SequenceID, v.Name, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
+			LV_Add(iconx, v.SequenceID, v.Name, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
+	}
 	adjustColumnWidths()
 }
 adjustColumnWidths() {
