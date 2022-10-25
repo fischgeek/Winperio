@@ -16,14 +16,16 @@ fileVersion = 3.0.17
 	; will need to change the matching logic in the timer
 ; option to skip if maximized
 
+admin()
+
 FileCreateDir, %A_ScriptDir%/assets
 FileInstall, assets/new.png, assets/new.png, 1
 
-#Include %a_ScriptDir%\lib\class_log.ahk
-#Include %a_ScriptDir%\lib\class_utils.ahk
-#Include %a_ScriptDir%\lib\class_window.ahk
-#Include %a_ScriptDir%\lib\class_imagebutton.ahk
-#Include %a_ScriptDir%\lib\class_settings.ahk
+#Include %A_ScriptDir%\lib\class_log.ahk
+#Include %A_ScriptDir%\lib\class_utils.ahk
+#Include %A_ScriptDir%\lib\class_window.ahk
+#Include %A_ScriptDir%\lib\class_imagebutton.ahk
+#Include %A_ScriptDir%\lib\class_settings.ahk
 
 SetBatchLines, -1
 SetTitleMatchMode, 2
@@ -1060,4 +1062,20 @@ setHover(cid,h) {
 			GuiControl,_Main_:, % h.name, % "*w30 *h30 " h.path
 			h.hover := false
 		}
+}
+
+admin() {
+	full_command_line := DllCall("GetCommandLine", "str")
+
+	if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
+	{
+		try
+		{
+			if A_IsCompiled
+				Run *RunAs "%A_ScriptFullPath%" /restart
+			else
+				Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%"
+		}
+		ExitApp
+	}
 }
