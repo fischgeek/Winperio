@@ -310,6 +310,9 @@ SelectedItem:
 	Gosub, Edit
 	return
 }
+#IfWinActive, Winperio - ;Edit and Add window titles, the rule below was absorbing deletes in the popup window
+Delete::SendInput {delete}
+
 #IfWinActive, Winperio
 Delete::
 {
