@@ -23,15 +23,18 @@ AutoXYWH(ctrl_list, Attributes="wh", Redraw = False){
             GuiControlGet, i, %A_Gui%:Pos, %A_LoopField%
             a := RegExReplace(Attributes, "i)[^xywh]")  
             fx := fy := fw := fh := 0
+			;fm:= ""
             Loop, Parse, a
                 If !RegExMatch(Attributes, "i)" A_LoopField "\s*\K[\d.-]+", f%A_LoopField%)
                   f%A_LoopField% := 1
             cInfo[ctrl] := { x:ix, fx:fx, y:iy, fy:fy, w:iw, fw:fw, h:ih, fh:fh, gw:A_GuiWidth, gh:A_GuiHeight, a:StrSplit(a) }
+			;cInfo[ctrl] := { x:ix, fx:fx, y:iy, fy:fy, w:iw, fw:fw, h:ih, fh:fh, fm:fm, gw:A_GuiWidth, gh:A_GuiHeight, a:StrSplit(a) }
         }Else If ( cInfo[ctrl].a.1) {
             x := (A_GuiWidth  - cInfo[ctrl].gw) * cInfo[ctrl].fx + cInfo[ctrl].x
             y := (A_GuiHeight - cInfo[ctrl].gh) * cInfo[ctrl].fy + cInfo[ctrl].y
             w := (A_GuiWidth  - cInfo[ctrl].gw) * cInfo[ctrl].fw + cInfo[ctrl].w
             h := (A_GuiHeight - cInfo[ctrl].gh) * cInfo[ctrl].fh + cInfo[ctrl].h
+            ;m := (A_GuiHeight - cInfo[ctrl].gh) * cInfo[ctrl].fm + cInfo[ctrl].m
             For i, a in cInfo[ctrl]["a"]
                 Options .= a %a% A_Space
             GuiControl, % A_Gui ":" (Redraw ? "MoveDraw" : "Move"), % A_LoopField, % Options

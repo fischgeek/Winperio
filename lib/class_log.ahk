@@ -45,6 +45,7 @@ class Log {
 			prepend .= "| "
 		val := Utils.Stamp() prepend m
 		;~ FileAppend, % val "`n", % Settings.LogFile
+		;t(m)
 		FileAppend, % val "`n", *
 		;~ MsgBox % "done writing`n`n" val "`n`n" Settings.LogFile
 	}

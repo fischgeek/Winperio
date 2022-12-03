@@ -13,8 +13,9 @@ class Window {
 	MoveID:=
 	AlwaysOnTop:=
 	IsPaused:=
+	IsMaximized:=
 	
-	__New(s, pro, name, pat, t, c, p, x, y, w, h, m, aot, ispaused) {
+	__New(s, pro, name, pat, t, c, p, x, y, w, h, m, aot, ispaused, ismaximized) {
 		this.SequenceID := s
 		this.Profile := pro
 		this.Name := name
@@ -29,5 +30,6 @@ class Window {
 		this.MoveID := m
 		this.AlwaysOnTop := aot
 		this.IsPaused := ispaused
+		this.IsMaximized := ismaximized
 	}
 }

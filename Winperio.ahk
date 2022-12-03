@@ -54,7 +54,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	; Gui, Add, Picture, w30 h30 ys gEdit vbtnEdit, % imgButtons["edit"].path
 	; Gui, Add, Picture, w30 h30 ys gRemove vbtnRemove, % imgButtons["remove"].path
 	Gui, Add, Picture, w30 h30 ys gShowAddNew vbtnAddNew, % imgButtons["new"].path
-	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Name|Pattern|X|Y|W|H
+	Gui, Add, ListView, Section xm r15 AltSubmit gSelectedItem vListSelection w%defaultWidth%, ID|Name|Pattern|X|Y|W|H|M
 	Gui, Add, Text, xm vlblCurrentProfile w500, % "Current Profile: " sets.ActiveProfile
 	; Gui, Add, Button, Section Disabled gRemove vbtnRemove, Remove
 	; Gui, Add, Button, ys wp Disabled gEdit vbtnEdit, Edit
@@ -638,7 +638,7 @@ SaveCoords:
 	GuiControl, Disable, btnSaveCoords
 	GuiControl, Show, btnSelectWin
 	GuiControl, Hide, btnCancelSelect
-	WinArray[sequence] := new Window(sequence, sets.ActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID, 0)
+	WinArray[sequence] := new Window(sequence, sets.ActiveProfile, dispWin, dispClass, dispProc, dispX, dispY, dispW, dispH, RadMoveID, 0, 0)
 	selectMode := 0
 	return
 }
@@ -650,15 +650,26 @@ saveNewCoords(win) {
 	IniWrite, % win.YCoord, %config%, % sequence, Y
 	IniWrite, % win.Width, %config%, % sequence, W
 	IniWrite, % win.Height, %config%, % sequence, H
+	IniWrite, % win.IsMaximized, %config%, % sequence, IsMaximized
 	IniRead, profile, %config%, Settings, ActiveProfile, % ""
 	populateGlobalArrays(profile)
 	populateListView()
 }
-
+ActiveMinMaxState(fullyMatchableName){
+	WinGet, OutputVar, MinMax, %fullyMatchableName%
+	if OutputVar = -1
+		return "min"
+	else if OutputVar = 1
+		return "max"
+	else
+		return "normal"
+}
+;IsWinMaximized(){
+;}
 ; timers
 GetActiveWin:
 {
-  wasShift := GetKeyState("LShift", "P")
+  	wasShift := GetKeyState("LShift", "P")
 	WinGet, allWins, List
 	Loop, % allWins
 	{
@@ -672,17 +683,50 @@ GetActiveWin:
 		for k, v in ProfileWinArray { 
 			r := RegExMatch(fullyMatchableName, "i)" v.Pattern)
 
+			minMaxState := ActiveMinMaxState(fullyMatchableName)
 			if (r > 0 && !v.IsPaused) {
 				if (wasShift && WinActive("ahk_id " id)) {
 					v.XCoord := curX
 					v.YCoord := curY
 					v.Width := curW
 					v.Height := curH
+					v.IsMaximized := minMaxState
 					saveNewCoords(v)
-					Log.Write("x: " curX " y: " curY)
+					t("Saved")
+					Log.Write("x: " curX " y: " curY "minMaxState: " minMaxState)
 				} else {
-					; Log.Write("[" A_Index "] matched: " v.Pattern " with " fullyMatchableName)
-					WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+					Log.Write("[" A_Index "] matched: " v.Pattern " im "  v.IsMaximized " " minMaxState)
+					if(v.IsMaximized=""){
+						;log.Write("def to normal")
+						v.IsMaximized := "normal"
+					}
+						if minMaxState != "min" 
+						{
+						if minMaxState <> v.IsMaximized
+						{
+							if v.IsMaximized = "max"
+							{
+								;log.Write("max")
+								WinMaximize, %fullyMatchableName%
+							}
+							/*
+							if v.IsMaximized = "min"
+							{
+								;log.Write("min")
+								WinMinimize, %fullyMatchableName%
+							}
+							*/
+							if v.IsMaximized = "normal"
+							{
+								;log.Write("norm")
+								WinRestore, %fullyMatchableName%
+								WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+							}
+						} else {
+							log.Write("non norm move")
+							WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+						}
+					}
 					; WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
 				}
 			}
@@ -965,7 +1009,8 @@ getSavedWindows() {
 			IniRead, h, %config%, 	%seq%, H
 			IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
 			IniRead, isPaused, %config%, %seq%, IsPaused, 0
-			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot, isPaused)
+			IniRead, isMaximized, %config%, %seq%, IsMaximized, 0
+			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot, isPaused, isMaximized)
 			wa[win.SequenceID] := win
 		}
 	}
@@ -989,7 +1034,7 @@ populateListView() {
 	{
 		iconx := v.IsPaused == 0 ? "Icon1" : "Icon2"
 		if (v.Profile == sets.ActiveProfile)
-			LV_Add(iconx, v.SequenceID, v.Name, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height)
+			LV_Add(iconx, v.SequenceID, v.Name, v.Pattern, v.XCoord, v.YCoord, v.Width, v.Height, v.IsMaximized)
 	}
 	adjustColumnWidths()
 }
@@ -1078,4 +1123,33 @@ admin() {
 		}
 		ExitApp
 	}
+}
+
+TempTooltip(TTTtitle,duration){
+	global
+	Tooltip %TTTtitle%
+	SetTimer("RemoveToolTip",duration)
+}
+RemoveToolTip:
+	SetTimer RemoveToolTip, Off
+	ToolTip
+return
+T(msg,duration=2000){ ;t()
+	TempToolTip(msg,duration)
+}
+SetTimer(timer, interval){
+	global TimerLog
+	ThisTimer=%timer%
+
+	If IsLabel(ThisTimer){
+		;log(A_ThisFunc,"Timer Set: " ThisTimer " for " interval " ms",0)
+		SetTimer %ThisTimer%,%interval%
+	}else{
+		;log(A_ThisFunc,"Timer not found: " ThisTimer,0)
+	}
+	;else
+		;msgbox % "Timer " timer " does not exist"
+	;log=c:\temp\timerlog-%A_ScriptName%.txt
+	;FileDelete %timerlog%
+	;FileAppend %timerlog%,%log%
 }
