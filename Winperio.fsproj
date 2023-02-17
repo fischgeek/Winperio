@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Main.fs" />
         <Compile Include="Counter.fs" />
         <Compile Include="About.fs" />
         <Compile Include="Shell.fs" />
@@ -13,10 +14,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia.Desktop" Version="0.10.12" />
-        <PackageReference Include="Avalonia.Diagnostics" Version="0.10.12" />
-        <PackageReference Include="JaggerJo.Avalonia.FuncUI" Version="0.5.0" />
-        <PackageReference Include="JaggerJo.Avalonia.FuncUI.DSL" Version="0.5.0" />
-        <PackageReference Include="JaggerJo.Avalonia.FuncUI.Elmish" Version="0.5.0" />
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="0.10.18" />
+        <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+        <PackageReference Include="Avalonia.Diagnostics" Version="0.10.18" />
+        <PackageReference Include="JaggerJo.Avalonia.FuncUI" Version="0.5.3" />
+        <PackageReference Include="JaggerJo.Avalonia.FuncUI.DSL" Version="0.5.3" />
+        <PackageReference Include="JaggerJo.Avalonia.FuncUI.Elmish" Version="0.5.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="FSharp.Core" Version="7.0.200" />
     </ItemGroup>
 </Project>

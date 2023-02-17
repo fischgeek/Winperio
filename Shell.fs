@@ -18,16 +18,18 @@ module Shell =
 
     type State =
         /// store the child state in your main state
-        { aboutState: About.State; counterState: Counter.State;}
+        { aboutState: About.State; counterState: Counter.State; mainState: Main.State}
 
     type Msg =
         | AboutMsg of About.Msg
         | CounterMsg of Counter.Msg
+        | MainMsg of Main.Msg
 
     let init =
         let aboutState, aboutCmd = About.init
         let counterState = Counter.init
-        { aboutState = aboutState; counterState = counterState },
+        let mainState = Main.init
+        { aboutState = aboutState; counterState = counterState; mainState = mainState },
         /// If your children controls don't emit any commands
         /// in the init function, you can just return Cmd.none
         /// otherwise, you can use a batch operation on all of them
@@ -50,6 +52,10 @@ module Shell =
             /// map the message to the kind of message 
             /// your child control needs to handle
             Cmd.none
+        | MainMsg mainmsg ->
+            let mainMsg = Main.update mainmsg state.mainState
+            { state with mainState = mainMsg },
+            Cmd.none
 
     let view (state: State) (dispatch) =
         DockPanel.create
@@ -62,7 +68,14 @@ module Shell =
                                   TabItem.content (Counter.view state.counterState (CounterMsg >> dispatch)) ]
                             TabItem.create
                                 [ TabItem.header "About"
-                                  TabItem.content (About.view state.aboutState (AboutMsg >> dispatch)) ] ] ] ] ]
+                                  TabItem.content (About.view state.aboutState (AboutMsg >> dispatch)) ]
+                            TabItem.create
+                                [ TabItem.header "Main"
+                                  TabItem.content (Main.view state.mainState (MainMsg >> dispatch)) ]
+                          ] 
+                    ] 
+                ] 
+            ]
 
     /// This is the main window of your application
     /// you can do all sort of useful things here like setting heights and widths
@@ -72,8 +85,8 @@ module Shell =
         inherit HostWindow()
         do
             base.Title <- "Winperio"
-            base.Width <- 300.0
-            base.Height <- 300.0
+            base.Width <- 800.0
+            base.Height <- 500.0
             base.MinWidth <- 300.0
             base.MinHeight <- 300.0
 
