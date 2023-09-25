@@ -94,25 +94,25 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Font, s10, Consolas
 	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
 	Gui, Font, s10, Segoe UI
-	
+
 	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId
-	
+
 	Gui, Font, s12, Segoe UI
 	Gui, Add, Text, xm, % "Coordinates"
 	Gui, Font, s10, Segoe UI
-	
+
 	Gui, Add, Text, Section xm w20, X:
 	Gui, Add, Edit, ys-4 w90 gEditWinXCoordChanged
 	Gui, Add, UpDown, vEditdispX gEditWinXCoordChanged 0x80 Range-2147483648-2147483647
-	
+
 	Gui, Add, Text, Section xm w20, Y:
 	Gui, Add, Edit, ys-4 w90 gEditWinYCoordChanged
 	Gui, Add, UpDown, vEditdispY gEditWinYCoordChanged 0x80 Range-2147483648-2147483647
-	
+
 	Gui, Add, Text, Section xm w20, W:
 	Gui, Add, Edit, ys-4 w90 gEditWinWCoordChanged
 	Gui, Add, UpDown, vEditdispW gEditWinWCoordChanged 0x80 Range-2147483648-2147483647
-	
+
 	Gui, Add, Text, Section xm w20, H:
 	Gui, Add, Edit, ys-4 w90 gEditWinHCoordChanged
 	Gui, Add, UpDown, vEditdispH gEditWinHCoordChanged 0x80 Range-2147483648-2147483647
@@ -122,7 +122,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Font, s10, Segoe UI
 
 	Gui, Add, Checkbox, Section xm vcbxAlwaysOnTop Disabled, Always on top
-	
+
 	Gui, Add, Text, xm r2
 	Gui, Add, Button, Section xm w60 gEditSave vbtnEditSave, Save
 	Gui, Add, Button, ys wp gEditCancel vbtnEditCancel, Cancel
@@ -145,7 +145,7 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Menu, ProfileMenu, Add, % "Sync Profiles with number of Screens", ProfileMenuSync
 	Menu, ProfileMenu, Add
 	for k, v in sets.Profiles
-		Menu, ProfileMenu, Add, %v%, ProfileMenuItems	
+		Menu, ProfileMenu, Add, %v%, ProfileMenuItems
 	Menu, HelpMenu, Add, About, HelpAbout
 	; Menu, HelpMenu, Add
 	; Menu, HelpMenu, Add, Uninstall, HelpUninstall
@@ -153,13 +153,13 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Menu, MenuBar, Add, Profiles, :ProfileMenu
 	Menu, MenuBar, Add, Help, :HelpMenu
 	Gui, Menu, MenuBar
-	
+
 	Try
 		Menu, ProfileMenu, Check, % sets.ActiveProfile
-	
+
 	IniRead, sync, %config%, Settings, ProfileSync, 0
 	if (sync) {
-		try 
+		try
 			Menu, ProfileMenu, Check, % "Sync Profiles with number of Screens"
 		selectActiveProfile(monCount "Screen")
 		SetTimer, CheckScreenCount, 1000
@@ -206,7 +206,7 @@ FileRunOnStartup:
 		RegDelete, HKCU, % "Software\Microsoft\Windows\CurrentVersion\Run", % "Winperio"
 	}
 	else,
-	{	
+	{
 		startToggle := "on"
 		IniWrite, 1, %config%, Settings, RunOnStartup
 		Menu, FileMenu, Check, Run on startup
@@ -250,7 +250,7 @@ ProfileMenuSync:
 	; 		sets.Profiles := "1Screen,2Screen,3Screen,4Screen"
 	; 	} else {
 	; 		StringReplace, sets.Profiles, sets.Profiles, % ",1Screen,2Screen,3Screen,4Screen",, All
-	; 		sets.Profiles := sets.Profiles ",1Screen,2Screen,3Screen,4Screen"	
+	; 		sets.Profiles := sets.Profiles ",1Screen,2Screen,3Screen,4Screen"
 	; 	}
 	; 	Loop, Parse, sets.Profiles, CSV
 	; 		Menu, ProfileMenu, Add, %A_LoopField%, ProfileMenuItems
@@ -348,7 +348,7 @@ Delete::
 		row := LV_GetNext(0, "F")
 		LV_GetText(itemId, row)
 		item := findItemById(itemId)
-		MsgBox, 4132, % "Winperio - Delete", % "Are you sure you want to delete the following entry?`n`n" item.Pattern 
+		MsgBox, 4132, % "Winperio - Delete", % "Are you sure you want to delete the following entry?`n`n" item.Pattern
 		IfMsgBox, Yes
 		{
 			sets.DeleteWindow(item)
@@ -419,8 +419,8 @@ EditSave:
 	IniWrite, % profile, %config%, % txtCurrentSeqId, Profile
 	IniWrite, % txtOptionalName, %config%, % txtCurrentSeqId, Name
 	IniWrite, % currentWindowFullTitle, %config%, % txtCurrentSeqId, Pattern
-	IniWrite, % EditDispX, %config%, % txtCurrentSeqId, X 
-	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y 
+	IniWrite, % EditDispX, %config%, % txtCurrentSeqId, X
+	IniWrite, % EditDispY, %config%, % txtCurrentSeqId, Y
 	IniWrite, % EditDispW, %config%, % txtCurrentSeqId, W
 	IniWrite, % EditDispH, %config%, % txtCurrentSeqId, H
 	IniWrite, % cbxAlwaysOnTop, %config%, % txtCurrentSeqId, AlwaysOnTop
@@ -459,7 +459,7 @@ CancelSelectAWindow:
 {
 	selectMode := 0
 	;~ SetTimer, WatchWin, Off
-	targetWindow := watchingWindow := 
+	targetWindow := watchingWindow :=
 	Gui, _Main_:Default
 	GuiControl, Show, btnSelectWin
 	GuiControl, Hide, btnCancelSelect
@@ -668,8 +668,8 @@ GetActiveWin:
 		WinGetClass, c, % "ahk_id " id
 		WinGetPos, curX, curY, curW, curH, % "ahk_id " id
 		fullyMatchableName := t " ahk_class " c " ahk_exe " p
-		
-		for k, v in ProfileWinArray { 
+
+		for k, v in ProfileWinArray {
 			r := RegExMatch(fullyMatchableName, "i)" v.Pattern)
 
 			if (r > 0 && !v.IsPaused) {
@@ -721,7 +721,7 @@ WatchWin:
 		GuiControl,, activeTitle, % watchingWindow
 		GuiControl,, activeClass, % winClass
 		GuiControl,, activeProcess, % winProc
-		
+
 		GuiControl,, EditdispX, % winX
 		GuiControl,, EditdispY, % winY
 		GuiControl,, EditdispW, % winW
@@ -811,7 +811,7 @@ CheckScreenCount:
 CheckForUpdates:
 {
 	;~ IniRead, lastCheckForUpdate, %config%, Settings, LastUpdateCheck, 0
-	;~ if (lastCheckForUpdate < 30) 
+	;~ if (lastCheckForUpdate < 30)
 	;~ {
 		;~ lastCheckForUpdate++
 		;~ IniWrite, %lastCheckForUpdate%, %config%, Settings, LastUpdateCheck
@@ -839,7 +839,7 @@ CheckForUpdates:
 	if (currentVersion = "ERROR")
 		return
 	FileDelete, %cPath%\WinperioConfig.ini
-	if (currentVersion != fileVersion) 
+	if (currentVersion != fileVersion)
 	{
 		IfExist, %cPath%\WinperioUpdate.exe
 			FileDelete, %cPath%\WinperioUpdate.exe
@@ -985,7 +985,7 @@ populateListView() {
 	global sets, config, WinArray
 	Gui, _Main_:Default
 	LV_Delete()
-	for k, v in WinArray 
+	for k, v in WinArray
 	{
 		iconx := v.IsPaused == 0 ? "Icon1" : "Icon2"
 		if (v.Profile == sets.ActiveProfile)

@@ -21,7 +21,7 @@ AutoXYWH(ctrl_list, Attributes="wh", Redraw = False){
         ctrl := A_Gui ":" A_LoopField
         If ( cInfo[ctrl].x = "" ){
             GuiControlGet, i, %A_Gui%:Pos, %A_LoopField%
-            a := RegExReplace(Attributes, "i)[^xywh]")  
+            a := RegExReplace(Attributes, "i)[^xywh]")
             fx := fy := fw := fh := 0
             Loop, Parse, a
                 If !RegExMatch(Attributes, "i)" A_LoopField "\s*\K[\d.-]+", f%A_LoopField%)
