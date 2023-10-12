@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Winperio", "Winperio.fsproj", "{F5248677-2435-4D2A-90F3-E7C557D93818}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F5248677-2435-4D2A-90F3-E7C557D93818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5248677-2435-4D2A-90F3-E7C557D93818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5248677-2435-4D2A-90F3-E7C557D93818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5248677-2435-4D2A-90F3-E7C557D93818}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1669009B-994A-4D28-8482-83B60DFFB100}
+	EndGlobalSection
+EndGlobal
