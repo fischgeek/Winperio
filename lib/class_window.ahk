@@ -13,7 +13,7 @@ class Window {
 	MoveID:=
 	AlwaysOnTop:=
 	IsPaused:=
-	
+
 	__New(s, pro, name, pat, t, c, p, x, y, w, h, m, aot, ispaused) {
 		this.SequenceID := s
 		this.Profile := pro

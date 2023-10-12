@@ -10,7 +10,7 @@ class Utils {
 		}
 		WinActivate, % win
 		WinWaitActive, % win
-		IfWinNotActive % win 
+		IfWinNotActive % win
 		{
 			WinGet, activePid, PID, A
 			WinGetClass, activeClass, A
@@ -45,13 +45,13 @@ class Utils {
 		}
 		return 1
 	}
-	
+
 	; clicks
 	ClickSleep(x, y, ms=500) {
 		Click, %x%, %y%
 		Sleep, %ms%
 	}
-	
+
 	; sleeps
 	SSleep(s) {
 		ss := s*1000
@@ -61,7 +61,7 @@ class Utils {
 	MSleep(m) {
 		this.SSleep(m*1000*60)
 	}
-	
+
 	; misc
 	FormatSeconds(NumberOfSeconds) {
 		time := 19990101

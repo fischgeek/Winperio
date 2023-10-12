@@ -2,7 +2,7 @@ class Settings {
   static ConfigPath := A_AppData "\Winperio"
   static ConfigFile := A_AppData "\Winperio\winperio.ini"
   static TrayIcon := A_ScriptDir "\assets\winperio.ico"
-  
+
   ProfileSync := 0
   Profiles := []
   ActiveProfile := ""
@@ -67,7 +67,7 @@ class Settings {
 
   ; internal
   cleanString(list) {
-    Loop, 
+    Loop,
     {
       StringLeft, lChar, list, 1
       if (lChar = ",")

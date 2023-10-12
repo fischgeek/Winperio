@@ -1,7 +1,7 @@
 class Log {
 	LastWriteTime := A_Now
 	LogWindowPID := 0
-	
+
 	Clear() {
 		FileDelete, % Settings.LogFile
 		FileAppend, % "", % Settings.LogFile
