@@ -2,6 +2,7 @@ namespace Winperio
 
 open Avalonia.Controls
 open Avalonia.FuncUI.DSL.Grid
+open Avalonia.FuncUI.Builder
 
 /// You can use modules in Avalonia.FuncUI in the same way you would do
 /// in [Elmish ](https://elmish.github.io/elmish/)
@@ -115,6 +116,10 @@ module Main =
         ] |> Helpers.generalize
         
     //let dg = new Avalonia.Controls.DataGrid()
+    //ivd.Outlet <- dg
+    //let dgv = View.createWithOutlet()
+
+
     let cds = new ColumnDefinitions()
     let rds = new RowDefinitions()
     let cd1 = new ColumnDefinition()
@@ -130,6 +135,10 @@ module Main =
     rds.Add(rd1)
     rds.Add(rd2)
 
+    let createDG (attrs: IAttr<DataGrid> list): IView<DataGrid> =
+        let v = ViewBuilder.Create<DataGrid>(attrs)
+        v
+
     let view (state: State) (dispatch: Msg -> unit) =
         DockPanel.create [
             DockPanel.horizontalAlignment HorizontalAlignment.Center
@@ -139,6 +148,8 @@ module Main =
                 headerView Dock.Top
                 avaloniaLinksView Dock.Left dispatch
                 avaloniaFuncUILinksView Dock.Right dispatch
+
+                //Control.init (fun _ -> ())
 
                 Grid.create [
                     Grid.columnDefinitions cds
