@@ -659,6 +659,9 @@ saveNewCoords(win) {
 GetActiveWin:
 {
   wasShift := GetKeyState("LShift", "P")
+	if (GetKeyState("LButton")) {
+		return
+	}
 	WinGet, allWins, List
 	Loop, % allWins
 	{
