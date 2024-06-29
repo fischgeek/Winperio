@@ -88,7 +88,7 @@ Gui, Add, Button, gNext w60, Next
 	Gui, Show
 	return
 }
-	
+
 Next:
 {
 	Gui, _Shortcuts_:Default
