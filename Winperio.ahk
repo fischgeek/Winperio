@@ -95,6 +95,8 @@ imgButtons := {"new":addNew, "remove":remove, "edit":editBtn}
 	Gui, Add, Edit, xm w800 vcurrentWindowFullTitle
 	Gui, Font, s10, Segoe UI
 
+	Gui, Add, Checkbox, Section xm vcbxIgnoreBlankTitles, Ignore blank titles
+
 	Gui, Add, Edit, x400 y0 w100 vtxtCurrentSeqId
 
 	Gui, Font, s12, Segoe UI
@@ -395,9 +397,9 @@ EditSelectedItem:
 	Gui, _Edit_:Default
 	resetEditGui(w.SequenceID)
 	GuiControl,, EditTitleLabel, Edit
-	; GuiControl,, EditDispWin, % w.Title
-	; GuiControl,, EditDispClass, % w.Class
-	; GuiControl,, EditDispProc, % w.Process
+	GuiControl,, activeTitle, % w.Title
+	GuiControl,, EditDispClass, % w.Class
+	GuiControl,, EditDispProc, % w.Process
 	GuiControl,, txtOptionalName, % w.Name
 	GuiControl,, currentWindowFullTitle, % w.Pattern
 	GuiControl,, EditDispX, % w.XCoord
@@ -406,7 +408,7 @@ EditSelectedItem:
 	GuiControl,, EditDispH, % w.Height
 	Gui, Show, AutoSize Center, Winperio - Edit
 	selectMode := 1
-	;~ SetTimer, WatchWinEdit, 100
+	; SetTimer, WatchWinEdit, 100
 	SetTimer, GetActiveWin, Off
 	return
 }
@@ -424,6 +426,7 @@ EditSave:
 	IniWrite, % EditDispW, %config%, % txtCurrentSeqId, W
 	IniWrite, % EditDispH, %config%, % txtCurrentSeqId, H
 	IniWrite, % cbxAlwaysOnTop, %config%, % txtCurrentSeqId, AlwaysOnTop
+	IniWrite, % cbxIgnoreBlankTitles, %config%, % txtCurrentSeqId, IgnoreBlankTitles
 	GuiControl, Disable, btnRemove
 	GuiControl, Disable, btnEdit
 	populateGlobalArrays(profile)
@@ -658,7 +661,7 @@ saveNewCoords(win) {
 ; timers
 GetActiveWin:
 {
-  wasShift := GetKeyState("LShift", "P")
+	wasShift := GetKeyState("LShift", "P")
 	if (GetKeyState("LButton")) {
 		return
 	}
@@ -671,6 +674,7 @@ GetActiveWin:
 		WinGetClass, c, % "ahk_id " id
 		WinGetPos, curX, curY, curW, curH, % "ahk_id " id
 		fullyMatchableName := t " ahk_class " c " ahk_exe " p
+		; Log.Write(fullyMatchableName)
 
 		for k, v in ProfileWinArray {
 			r := RegExMatch(fullyMatchableName, "i)" v.Pattern)
@@ -685,7 +689,13 @@ GetActiveWin:
 					Log.Write("x: " curX " y: " curY)
 				} else {
 					; Log.Write("[" A_Index "] matched: " v.Pattern " with " fullyMatchableName)
-					WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+					if (t != "") {
+						WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+					} else if (t == "" && v.IgnoreBlankTitles) {
+						; do nothing
+					} else if (t == "" && !v.IgnoreBlankTitles) {
+						WinMove, % "ahk_id " id,, v.XCoord, v.YCoord, v.Width, v.Height
+					}
 					; WinSet, AlwaysOnTop, % v.AlwaysOnTop, % "ahk_id " id
 				}
 			}
@@ -911,6 +921,7 @@ resetEditGui(cSeqId) {
 	GuiControl,, EditDispWin
 	GuiControl,, EditDispClass
 	GuiControl,, EditDispProc
+	; GuiControl,, 
 	GuiControl,, currentWindowFullTitle
 	GuiControl,, EditDispX
 	GuiControl,, EditDispY
@@ -968,7 +979,8 @@ getSavedWindows() {
 			IniRead, h, %config%, 	%seq%, H
 			IniRead, aot, %config%, %seq%, AlwaysOnTop, 0
 			IniRead, isPaused, %config%, %seq%, IsPaused, 0
-			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot, isPaused)
+			IniRead, IgnoreBlankTitles, %config%, %seq%, IgnoreBlankTitles, 0
+			win := new Window(seq, pro, name, pat, t, c, p, x, y, w, h, m, aot, isPaused, IgnoreBlankTitles)
 			wa[win.SequenceID] := win
 		}
 	}
